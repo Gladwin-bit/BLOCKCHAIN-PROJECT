@@ -1,0 +1,84 @@
+﻿≡ƒÜÇ Multi-Distributor Supply Chain Simulation
+
+============================================================
+
+≡ƒôï Test Accounts:
+  Factory:        0x70997970C51812dc3A010C7d01b50e0d17dc79C8
+  Distributor A:  0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC (Global Shipping Co)
+  Distributor B:  0x90F79bf6EB2c4f870365E785982E1f101E93b906 (Local Courier)
+  Retailer:       0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65 (City Mall)
+
+============================================================
+
+≡ƒÄ¡ STEP 1: Granting Roles...
+  Γ£à Granted MANUFACTURER role to Factory
+  Γ£à Granted DISTRIBUTOR role to Distributor A
+  Γ£à Granted DISTRIBUTOR role to Distributor B
+  Γ£à Granted RETAILER role to Retailer
+
+≡ƒÅ¡ STEP 2: Manufacturing Product...
+  Γ£à Product created with ID: 5
+  ≡ƒô¥ Product Name: Premium Wireless Headphones
+  ≡ƒôª Batch ID: BATCH-WH-2024-12
+  ≡ƒöÉ Secret Code (for verification): VERIFY-2024-SECRET
+
+≡ƒÜÜ STEP 3: Transfer to Distributor A (Global Shipping)...
+  Γ£à Transferred to Global Shipping Co
+  ≡ƒôì Location: Shanghai, China
+  ≡ƒô¥ Note: Shipment dispatched via cargo flight
+
+≡ƒÜ¢ STEP 4: Transfer to Distributor B (Local Courier)...
+  Γ£à Transferred to Local Courier
+  ≡ƒôì Location: Mumbai, India
+  ≡ƒô¥ Note: Received at regional hub
+
+≡ƒÅ¬ STEP 5: Transfer to Retailer (City Mall)...
+  Γ£à Transferred to City Mall
+  ≡ƒôì Location: Bangalore, India
+  ≡ƒô¥ Note: Delivered and placed in inventory
+
+≡ƒôè PRODUCT JOURNEY SUMMARY
+============================================================
+
+Product ID: 5
+Current State: At Retailer
+Current Owner: 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65
+
+≡ƒù║∩╕Å  Complete Journey (4 events):
+
+1. ≡ƒÅ¡ Created
+   ≡ƒôà 8/12/2025, 9:19:40 pm
+   ≡ƒôì Manufacturing Facility
+   ≡ƒæñ Handler: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8
+   ≡ƒô¥ Manufactured
+   |
+2. ≡ƒÜÜ In Transit
+   ≡ƒôà 8/12/2025, 9:19:41 pm
+   ≡ƒôì Factory Warehouse, Shanghai, China
+   ≡ƒæñ Handler: 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC
+   ≡ƒô¥ Shipment dispatched via cargo flight CA-1234
+   |
+3. ≡ƒÜÜ In Transit
+   ≡ƒôà 8/12/2025, 9:19:42 pm
+   ≡ƒôì Regional Distribution Center, Mumbai, India
+   ≡ƒæñ Handler: 0x90F79bf6EB2c4f870365E785982E1f101E93b906
+   ≡ƒô¥ Received at regional hub for last-mile delivery
+   |
+4. ≡ƒÅ¬ At Retailer
+   ≡ƒôà 8/12/2025, 9:19:43 pm
+   ≡ƒôì City Mall Electronics Store, Bangalore, India
+   ≡ƒæñ Handler: 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65
+   ≡ƒô¥ Delivered and verified, placed in inventory
+
+============================================================
+
+Γ£¿ SUCCESS! Multi-distributor flow completed!
+
+≡ƒÆí Next Steps:
+   1. Open your React app at http://localhost:3000
+   2. Navigate to the "Trace" page
+   3. Enter Product ID: 5
+   4. You should see all 4 events in the timeline!
+   5. Try verifying with secret code: VERIFY-2024-SECRET
+
+============================================================

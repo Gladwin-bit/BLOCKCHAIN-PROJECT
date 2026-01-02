@@ -1,0 +1,136 @@
+/* src/components/ProductTimeline.css */
+.product-timeline {
+    margin: 2rem 0;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.product-timeline h3 {
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+    color: #d4af37;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+    padding-bottom: 0.5rem;
+    display: inline-block;
+}
+
+.timeline-container {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline-event {
+    position: relative;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+}
+
+.timeline-marker {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 2;
+    position: relative;
+}
+
+.timeline-icon {
+    font-size: 1.5rem;
+}
+
+.timeline-content {
+    flex: 1;
+    padding: 1.5rem;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.timeline-content:hover {
+    transform: translateX(5px);
+    box-shadow: 0 8px 24px var(--shadow-color);
+}
+
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.timeline-header h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+.timeline-time {
+    font-size: 0.85rem;
+    color: var(--text-tertiary);
+}
+
+.timeline-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.timeline-details p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.timeline-details strong {
+    color: var(--text-primary);
+    margin-right: 0.5rem;
+}
+
+.coords-hint {
+    font-size: 0.75rem !important;
+    color: var(--text-tertiary) !important;
+    font-family: 'JetBrains Mono', monospace;
+    margin-left: 1.8rem !important;
+}
+
+.timeline-line {
+    position: absolute;
+    left: 25px;
+    top: 50px;
+    width: 2px;
+    height: calc(100% + 2rem);
+    border-left: 2px dashed;
+    opacity: 0.5;
+}
+
+.timeline-empty {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-tertiary);
+}
+
+@media (max-width: 768px) {
+    .timeline-container {
+        padding-left: 0;
+    }
+
+    .timeline-event {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .timeline-line {
+        display: none;
+    }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "supplychain-demo",
+  "version": "1.0.0",
+  "description": "This project showcases a Hardhat 3 Beta project using the native Node.js test runner (`node:test`) and the `viem` library for Ethereum interactions.",
+  "scripts": {
+    "build": "cd frontend && bun install && bun run build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "^3.1.0",
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@types/node": "^24.8.1",
+    "hardhat": "^2.27.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "type": "module",
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.4.0",
+    "@pinata/sdk": "^2.1.0",
+    "dotenv": "^17.2.3",
+    "ethers": "^6.15.0",
+    "ipfs-http-client": "^60.0.1",
+    "reactflow": "^11.11.4"
+  },
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "keywords": []
+}

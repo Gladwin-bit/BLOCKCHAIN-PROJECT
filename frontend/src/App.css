@@ -1,0 +1,23 @@
+.App {
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+  padding-top: var(--nav-height);
+}
+
+.content-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Page Transitions */
+.page-wrapper {
+  width: 100%;
+  min-height: calc(100vh - var(--nav-height));
+}
+
+@media (max-width: 768px) {
+  .content-container {
+    padding: 1rem;
+  }
+}

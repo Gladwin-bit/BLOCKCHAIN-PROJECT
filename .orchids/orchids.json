@@ -1,0 +1,10 @@
+{
+  "projectId": "f6db872b-55ba-4d63-8416-eed3e65eeb92",
+  "createdAt": 1766150351533,
+  "startupCommands": [
+    "npx hardhat node --port 8546",
+    "$env:PORT=3001; cd frontend; bun start"
+  ],
+  "vercelProjectId": "prj_OoNeHx8t8OLXV1sN05kh2XeH1CEA",
+  "deployedWithUserToken": false
+}

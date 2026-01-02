@@ -1,0 +1,29 @@
+{
+  "product": "Cocoa Beans",
+  "batch": "Batch-001",
+  "manufacturer": "ABC Cocoa Ltd.",
+  "productionDate": "2025-10-01",
+  "expiryDate": "2026-10-01",
+  "quantity": 100,
+  "certifications": [
+    {
+      "type": "Organic",
+      "issuer": "Organic Certifiers Inc.",
+      "dateIssued": "2025-09-15"
+    },
+    {
+      "type": "Fair Trade",
+      "issuer": "Fair Trade Organization",
+      "dateIssued": "2025-09-20"
+    }
+  ],
+  "qualityReports": [
+    {
+      "testName": "Purity Test",
+      "result": "98%",
+      "date": "2025-09-30",
+      "lab": "Quality Labs Ltd."
+    }
+  ],
+  "notes": "Batch meets all quality and ethical standards."
+}

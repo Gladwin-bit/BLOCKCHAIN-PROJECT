@@ -1,0 +1,35 @@
+# Node modules
+node_modules/
+**/node_modules/
+
+# Compilation output
+/dist
+/build
+**/build/
+
+# pnpm deploy output
+/bundle
+
+# Hardhat Build Artifacts
+/artifacts
+/cache
+/types
+/coverage
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+**/.env
+**/.env.*
+
+# Local Uploads
+backend/uploads/
+**/uploads/
+
+# Misc
+.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+test_output.txt
