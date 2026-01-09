@@ -330,3 +330,64 @@ export const logout = async (req, res) => {
         message: 'Logged out successfully'
     });
 };
+/**
+ * @route   DELETE /api/auth/account
+ * @desc    Delete user account permanently
+ * @access  Private
+ */
+export const deleteAccount = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        // Find user
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        // Delete uploaded files (ID proof and certificate)
+        const filesToDelete = [];
+
+        if (user.idProof && user.idProof.path) {
+            filesToDelete.push(user.idProof.path);
+        }
+
+        if (user.certificate && user.certificate.path) {
+            filesToDelete.push(user.certificate.path);
+        }
+
+        // Delete files from filesystem
+        for (const filePath of filesToDelete) {
+            try {
+                const fullPath = path.join(process.cwd(), filePath);
+                if (fs.existsSync(fullPath)) {
+                    fs.unlinkSync(fullPath);
+                    console.log('Deleted file:', fullPath);
+                }
+            } catch (fileError) {
+                console.error('Error deleting file:', fileError.message);
+                // Continue even if file deletion fails
+            }
+        }
+
+        // Delete user from database
+        await User.findByIdAndDelete(userId);
+
+        console.log('User account deleted:', user.email);
+
+        res.status(200).json({
+            success: true,
+            message: 'Account deleted successfully'
+        });
+    } catch (error) {
+        console.error('Delete account error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error deleting account',
+            error: error.message
+        });
+    }
+};

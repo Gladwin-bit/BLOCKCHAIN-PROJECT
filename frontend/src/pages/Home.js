@@ -2,7 +2,9 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
+import { Canvas } from "@react-three/fiber";
 import { useSupplyChain } from "../hooks/useSupplyChain";
+import SupplyChainNetwork from "../components/3D/SupplyChainNetwork";
 import "./Home.css";
 
 const Home = () => {
@@ -43,7 +45,12 @@ const Home = () => {
     ];
 
     return (
-        <div className="home-page">
+        <div
+            className="home-page"
+            style={{
+                '--bg-image': `url(${process.env.PUBLIC_URL}/supply-chain-bg.png)`
+            }}
+        >
             <section className="hero">
                 <motion.div
                     className="hero-floating-elements"
@@ -54,31 +61,44 @@ const Home = () => {
                 </motion.div>
 
                 <div className="hero-content">
-                    <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, ease: "easeOut" }}
-                    >
-                        <span className="hero-tag">Enterprise Blockchain Solution</span>
-                        <h1>Secure the<br /><span className="text-glow">Supply Chain</span></h1>
-                        <p>Eliminate counterfeits and establish absolute trust with our decentralized asset management protocol.</p>
+                    {/* 3D Background Visualization */}
+                    <div className="hero-3d-container">
+                        <Canvas camera={{ position: [0, 0, 3], fov: 50 }}>
+                            <ambientLight intensity={0.5} />
+                            <pointLight position={[10, 10, 10]} intensity={0.8} />
+                            <pointLight position={[-10, -10, -10]} intensity={0.3} />
+                            <SupplyChainNetwork />
+                        </Canvas>
+                    </div>
 
+                    {/* Hero Text Box */}
+                    <div className="hero-text-box">
                         <motion.div
-                            className="hero-actions"
-                            initial={{ opacity: 0, y: 20 }}
+                            initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.5, duration: 0.8 }}
+                            transition={{ duration: 0.8, ease: "easeOut" }}
                         >
-                            <Link to="/trace" className="btn btn-primary">
-                                <span>Get Started</span>
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                            </Link>
-                            <Link to="/verify" className="btn btn-secondary">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-                                <span>Verify Asset</span>
-                            </Link>
+                            <span className="hero-tag">Enterprise Blockchain Solution</span>
+                            <h1>Secure the<br /><span className="text-glow">Supply Chain</span></h1>
+                            <p>Eliminate counterfeits and establish absolute trust with our decentralized asset management protocol.</p>
+
+                            <motion.div
+                                className="hero-actions"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.5, duration: 0.8 }}
+                            >
+                                <Link to="/trace" className="btn btn-primary">
+                                    <span>Get Started</span>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                                </Link>
+                                <Link to="/verify" className="btn btn-secondary">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                                    <span>Verify Asset</span>
+                                </Link>
+                            </motion.div>
                         </motion.div>
-                    </motion.div>
+                    </div>
 
                     <motion.div
                         className="hero-stats"
@@ -131,7 +151,7 @@ const Home = () => {
             </section>
 
 
-        </div>
+        </div >
     );
 };
 

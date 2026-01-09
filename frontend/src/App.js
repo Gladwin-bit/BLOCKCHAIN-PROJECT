@@ -17,6 +17,7 @@ const Home = lazy(() => import('./pages/Home'));
 const Welcome = lazy(() => import('./pages/Welcome'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
+const Profile = lazy(() => import('./pages/Profile'));
 const VerifyProduct = lazy(() => import('./pages/VerifyProduct'));
 const AdminPanel = lazy(() => import('./pages/AdminPanel'));
 const ManageCustody = lazy(() => import('./pages/ManageCustody'));
@@ -51,6 +52,7 @@ function Navbar() {
                     <NavLink to="/verify" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>Verify</NavLink>
                     <NavLink to="/trace" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>Trace</NavLink>
                     <NavLink to="/explorer" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>Blockchain</NavLink>
+                    <NavLink to="/profile" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>Profile</NavLink>
 
 
 
@@ -147,6 +149,11 @@ function AnimatedRoutes() {
                     <Route path="/explorer" element={
                         <ProtectedRoute>
                             <PageWrapper><BlockchainExplorer /></PageWrapper>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/profile" element={
+                        <ProtectedRoute>
+                            <PageWrapper><Profile /></PageWrapper>
                         </ProtectedRoute>
                     } />
 

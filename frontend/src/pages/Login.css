@@ -9,6 +9,22 @@
     overflow: hidden;
 }
 
+.login-page::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: var(--bg-image);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.08;
+    z-index: -1;
+    pointer-events: none;
+}
+
 .login-container {
     position: relative;
     z-index: 1;
@@ -19,7 +35,13 @@
 .login-card {
     padding: 3rem;
     border-radius: 24px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1.5px solid rgba(120, 113, 108, 0.2);
+    box-shadow:
+        0 20px 60px rgba(0, 0, 0, 0.12),
+        0 8px 24px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 1);
 }
 
 .login-header {
@@ -43,10 +65,11 @@
     font-size: 2rem;
     font-weight: 700;
     margin: 0;
+    color: var(--text-primary);
 }
 
 .login-header p {
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--text-secondary);
     font-size: 0.95rem;
     margin-top: 0.5rem;
 }
@@ -64,34 +87,35 @@
 }
 
 .form-group label {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
 }
 
 .form-group input {
     padding: 0.875rem 1rem;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: #FFFFFF;
+    border: 2px solid rgba(120, 113, 108, 0.5);
     border-radius: 12px;
-    color: #fff;
+    color: var(--text-primary);
     font-size: 1rem;
     transition: all 0.3s ease;
     outline: none;
 }
 
 .form-group input:focus {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(102, 126, 234, 0.5);
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background: #FFFFFF;
+    border-color: var(--accent-gold);
+    box-shadow: 0 0 0 4px var(--accent-gold-glow);
 }
 
 .form-group input.error {
-    border-color: rgba(245, 87, 108, 0.5);
+    border-color: var(--accent-error);
 }
 
 .form-group input::placeholder {
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--text-tertiary);
+    opacity: 0.7;
 }
 
 .error-message {
@@ -121,14 +145,15 @@
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: #fff;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    background: linear-gradient(135deg, #D4AF37 0%, #B8941F 100%);
+    color: #FFFFFF;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
 }
 
 .btn-primary:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+    box-shadow: 0 8px 24px rgba(212, 175, 55, 0.4);
+    background: linear-gradient(135deg, #E5C347 0%, #D4AF37 100%);
 }
 
 .btn-primary:disabled {
@@ -160,31 +185,31 @@
 }
 
 .login-footer p {
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--text-secondary);
     font-size: 0.9375rem;
 }
 
 .link {
-    color: #667eea;
+    color: var(--accent-gold);
     text-decoration: none;
     font-weight: 600;
     transition: color 0.3s ease;
 }
 
 .link:hover {
-    color: #764ba2;
+    color: #B8941F;
     text-decoration: underline;
 }
 
 .link-secondary {
-    color: rgba(255, 255, 255, 0.6);
+    color: #78716C;
     text-decoration: none;
     font-size: 0.875rem;
     transition: color 0.3s ease;
 }
 
 .link-secondary:hover {
-    color: rgba(255, 255, 255, 0.9);
+    color: #1C1917;
 }
 
 /* Decorative elements */
@@ -209,7 +234,7 @@
 .decoration-blob.blob-1 {
     width: 400px;
     height: 400px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: radial-gradient(circle, rgba(212, 175, 55, 0.3) 0%, transparent 70%);
     top: -200px;
     right: -200px;
 }
@@ -217,7 +242,7 @@
 .decoration-blob.blob-2 {
     width: 300px;
     height: 300px;
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    background: radial-gradient(circle, rgba(168, 162, 158, 0.25) 0%, transparent 70%);
     bottom: -150px;
     left: -150px;
     animation-delay: -10s;
@@ -226,7 +251,7 @@
 .decoration-blob.blob-3 {
     width: 250px;
     height: 250px;
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    background: radial-gradient(circle, rgba(212, 175, 55, 0.2) 0%, transparent 70%);
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);

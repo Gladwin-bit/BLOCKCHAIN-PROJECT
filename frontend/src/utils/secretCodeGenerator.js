@@ -30,10 +30,15 @@ export const generateSecretCode = (productId, productName) => {
  * @returns {string} - A secure secret code (16 characters)
  */
 export const generateShortSecretCode = (productId, productName) => {
-    const fullCode = generateSecretCode(productId, productName);
-    // Take first 16 characters and format with dashes for readability
-    const shortCode = fullCode.substring(0, 16);
-    return `${shortCode.substring(0, 4)}-${shortCode.substring(4, 8)}-${shortCode.substring(8, 12)}-${shortCode.substring(12, 16)}`.toUpperCase();
+    // For handover keys, use simple 8-character format (consistent with ManageCustody)
+    if (productId === "HANDOVER" || productName === "B2B") {
+        return Math.random().toString(36).slice(-8).toUpperCase();
+    }
+
+    // For consumer scratch-off codes, use the UUID-style format
+    const uuid = crypto.randomUUID();
+    const parts = uuid.split('-');
+    return `${parts[0].slice(0, 4).toUpperCase()}-${parts[1].toUpperCase()}-${parts[2].toUpperCase()}-${parts[3].toUpperCase()}`;
 };
 
 /**

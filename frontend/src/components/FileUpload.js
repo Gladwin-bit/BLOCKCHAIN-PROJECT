@@ -2,7 +2,17 @@ import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import './FileUpload.css';
 
-const FileUpload = ({ label, name, accept, onChange, required, file, error }) => {
+const FileUpload = ({
+    label,
+    name,
+    accept,
+    onChange,
+    required,
+    file,
+    error,
+    verificationStatus, // 'idle' | 'verifying' | 'verified' | 'failed'
+    onVerify // Callback when file needs verification
+}) => {
     const fileInputRef = useRef(null);
     const [dragActive, setDragActive] = useState(false);
 
@@ -122,6 +132,37 @@ const FileUpload = ({ label, name, accept, onChange, required, file, error }) =>
                         <div className="file-details">
                             <p className="file-name">{file.name}</p>
                             <p className="file-size">{(file.size / 1024).toFixed(2)} KB</p>
+
+                            {/* Verification Status */}
+                            {verificationStatus && (
+                                <div className={`verification-badge ${verificationStatus}`}>
+                                    {verificationStatus === 'verifying' && (
+                                        <>
+                                            <span className="spinner-small"></span>
+                                            <span>Verifying signature...</span>
+                                        </>
+                                    )}
+                                    {verificationStatus === 'verified' && (
+                                        <>
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                                            </svg>
+                                            <span>Digitally Signed ✓</span>
+                                        </>
+                                    )}
+                                    {verificationStatus === 'failed' && (
+                                        <>
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <circle cx="12" cy="12" r="10"></circle>
+                                                <line x1="15" y1="9" x2="9" y2="15"></line>
+                                                <line x1="9" y1="9" x2="15" y2="15"></line>
+                                            </svg>
+                                            <span>No Valid Signature</span>
+                                        </>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
                     <button

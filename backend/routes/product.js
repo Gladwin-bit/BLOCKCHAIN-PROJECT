@@ -106,7 +106,7 @@ router.get('/certificate/:filename', (req, res) => {
  */
 router.post('/register', async (req, res) => {
     try {
-        const { productId, name, manufacturerAddress, secretHash, certificateFilename, certificatePath, txHash } = req.body;
+        const { productId, name, manufacturerAddress, consumerSecretHash, certificateFilename, certificatePath, txHash } = req.body;
 
         // Validate required fields
         if (!productId || !name || !manufacturerAddress || !certificateFilename) {
@@ -138,7 +138,8 @@ router.post('/register', async (req, res) => {
             name,
             manufacturer: manufacturer._id,
             manufacturerAddress: manufacturerAddress.toLowerCase(),
-            secretHash,
+            consumerSecretHash,
+            currentHandoverKey: req.body.currentHandoverKey || null, // Save handover key for rolling mechanism
             productCertificate: {
                 filename: certificateFilename,
                 path: certificatePath || `uploads/product-certificates/${certificateFilename}`,
@@ -219,6 +220,85 @@ router.get('/:productId', async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to retrieve product',
+            error: error.message
+        });
+    }
+});
+
+/**
+ * @route   GET /api/products/:id/handover-key
+ * @desc    Get the current handover key for a product
+ * @access  Public
+ */
+router.get('/:id/handover-key', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const Product = (await import('../models/Product.js')).default;
+        const product = await Product.findOne({ productId: parseInt(id) });
+
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: 'Product not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            handoverKey: product.currentHandoverKey,
+            productId: product.productId
+        });
+    } catch (error) {
+        console.error('Get handover key error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to get handover key',
+            error: error.message
+        });
+    }
+});
+
+/**
+ * @route   PUT /api/products/:id/handover-key
+ * @desc    Update the current handover key for a product
+ * @access  Public
+ */
+router.put('/:id/handover-key', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { handoverKey } = req.body;
+
+        if (!handoverKey) {
+            return res.status(400).json({
+                success: false,
+                message: 'Handover key is required'
+            });
+        }
+
+        const Product = (await import('../models/Product.js')).default;
+        const product = await Product.findOneAndUpdate(
+            { productId: parseInt(id) },
+            { currentHandoverKey: handoverKey },
+            { new: true }
+        );
+
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: 'Product not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Handover key updated successfully',
+            productId: product.productId
+        });
+    } catch (error) {
+        console.error('Update handover key error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update handover key',
             error: error.message
         });
     }

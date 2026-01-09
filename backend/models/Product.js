@@ -21,7 +21,7 @@ const productSchema = new mongoose.Schema({
         required: true,
         lowercase: true
     },
-    secretHash: {
+    consumerSecretHash: {
         type: String,
         required: true
     },
@@ -41,6 +41,10 @@ const productSchema = new mongoose.Schema({
     },
     blockchainTxHash: {
         type: String
+    },
+    currentHandoverKey: {
+        type: String,
+        default: null
     },
     createdAt: {
         type: Date,

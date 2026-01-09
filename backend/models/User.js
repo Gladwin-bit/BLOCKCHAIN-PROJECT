@@ -37,7 +37,16 @@ const userSchema = new mongoose.Schema({
     certificate: {
         filename: String,
         path: String,
-        uploadedAt: Date
+        uploadedAt: Date,
+        digitalSignature: {
+            verified: {
+                type: Boolean,
+                default: false
+            },
+            verifiedAt: Date,
+            signatureCount: Number,
+            details: mongoose.Schema.Types.Mixed
+        }
     },
     walletAddress: {
         type: String,

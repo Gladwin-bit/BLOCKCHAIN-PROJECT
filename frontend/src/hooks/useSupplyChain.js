@@ -11,31 +11,27 @@ export const useSupplyChain = () => {
         ROLES, PRODUCT_STATES
     } = context;
 
-    const generateHandover = async (id, newSecretCode) => {
+    const transferCustody = async (id, incomingKey, nextKey, location) => {
         if (!contract) throw new Error("Connection: Wallet not connected");
-        const newHash = ethers.keccak256(ethers.toUtf8Bytes(newSecretCode));
-        toast.info("Generating Secure Handover Pass...");
-        const tx = await contract.generateHandover(id, newHash);
-        await tx.wait();
-        toast.success("Handover Pass Generated! 🎟️");
-    };
 
-    const acceptHandover = async (id, scannedSecret, nextSecretCode, location) => {
-        if (!contract) throw new Error("Connection: Wallet not connected");
-        const nextHash = ethers.keccak256(ethers.toUtf8Bytes(nextSecretCode));
-        toast.info("Validating Code & Rolling Protocol...");
-        const tx = await contract.acceptHandover(id, scannedSecret, nextHash, location);
-        await tx.wait();
-        toast.success("Custody Accepted & Protocol Rolled! 🔄");
-    };
+        try {
+            console.log("Transfer Custody - Input:", { id, incomingKey, nextKey, location });
+            // Contract expects: incomingKey as STRING, nextKeyHash as BYTES32
+            const nextHash = ethers.keccak256(ethers.toUtf8Bytes(nextKey));
+            console.log("Next Hash:", nextHash);
 
-    const updateSecret = async (id, newSecretCode) => {
-        if (!contract) throw new Error("Connection: Wallet not connected");
-        const newHash = ethers.keccak256(ethers.toUtf8Bytes(newSecretCode));
-        toast.info("Updating Secret Key Hash...");
-        const tx = await contract.updateSecret(id, newHash);
-        await tx.wait();
-        toast.success("Secret Hash Updated on Blockchain! 🔐");
+            toast.info("Transferring Custody & Rolling Key...");
+            // Pass incomingKey as plain string, nextHash as bytes32
+            const tx = await contract.transferCustody(id, incomingKey, nextHash, location);
+            console.log("Transaction sent:", tx.hash);
+            await tx.wait();
+            toast.success("Custody Transferred! 🔄");
+        } catch (error) {
+            console.error("Transfer Custody Error:", error);
+            console.error("Error message:", error.message);
+            console.error("Error reason:", error.reason);
+            throw error;
+        }
     };
 
     const verifyAndClaim = async (id, secretKey) => {
@@ -84,7 +80,7 @@ export const useSupplyChain = () => {
     const claimCustomerOwnership = async (id, secretKey, customerName, location) => {
         if (!contract) throw new Error("Connection: Wallet not connected");
         toast.info("Claiming product ownership...");
-        const tx = await contract.claimCustomerOwnership(id, secretKey, customerName, location);
+        const tx = await contract.claimOwnership(id, secretKey, customerName, location);
         const receipt = await tx.wait();
 
         const claimedEvent = receipt.logs.some(log => {
@@ -118,9 +114,9 @@ export const useSupplyChain = () => {
 
     return {
         account, connectWallet, contract, readOnlyContract,
-        createProduct, generateHandover, acceptHandover, claimProduct, transferOwnership,
+        createProduct, transferCustody, claimProduct, transferOwnership,
         getProductData, hasRole, grantRole, revokeRole, recordVerification,
-        updateSecret, verifyAndClaim, claimCustomerOwnership,
+        claimCustomerOwnership,  // Keep for backward compatibility during transition
         ROLES, PRODUCT_STATES
     };
 };

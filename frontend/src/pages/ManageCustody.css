@@ -439,6 +439,141 @@
     animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
+/* QR Waybill Styles */
+.waybill-zone,
+.receiver-zone {
+    margin-top: 20px;
+}
+
+.waybill-qr-container {
+    background: rgba(30, 30, 30, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 30px;
+    text-align: center;
+    margin: 20px 0;
+}
+
+.waybill-info {
+    margin: 20px 0;
+    text-align: left;
+}
+
+.waybill-info .info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.waybill-info .info-row span:first-child {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.waybill-info .info-row span:last-child {
+    color: #fff;
+    font-weight: 500;
+}
+
+.key-display {
+    font-family: monospace;
+    background: rgba(212, 175, 55, 0.1);
+    padding: 4px 8px;
+    border-radius: 4px;
+    color: #d4af37 !important;
+}
+
+.btn-download {
+    background: linear-gradient(135deg, #d4af37, #f2d06b);
+    color: #000;
+    font-weight: 600;
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: all 0.3s ease;
+}
+
+.btn-download:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(212, 175, 55, 0.3);
+}
+
+.btn-download:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.qr-upload-zone {
+    background: rgba(30, 30, 30, 0.7);
+    backdrop-filter: blur(10px);
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 40px;
+    margin: 20px 0;
+    transition: all 0.3s ease;
+}
+
+.qr-upload-zone:hover {
+    border-color: rgba(212, 175, 55, 0.5);
+    background: rgba(40, 40, 40, 0.7);
+}
+
+.dropzone {
+    display: block;
+    cursor: pointer;
+    width: 100%;
+}
+
+.dropzone-content {
+    text-align: center;
+    padding: 20px;
+}
+
+.upload-icon {
+    font-size: 4rem;
+    margin-bottom: 15px;
+    opacity: 0.7;
+}
+
+.dropzone-content p {
+    font-size: 1.1rem;
+    color: #fff;
+    margin: 10px 0;
+}
+
+.dropzone-content small {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.9rem;
+}
+
+.waybill-scanned {
+    animation: fadeIn 0.4s ease-in;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.action-buttons .btn {
+    flex: 1;
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
 /* RESPONSIVE */
 @media (max-width: 600px) {
     .card-header {
@@ -450,5 +585,17 @@
     .btn-upload-scan {
         width: 100%;
         justify-content: center;
+    }
+
+    .waybill-qr-container {
+        padding: 20px;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    .action-buttons .btn {
+        width: 100%;
     }
 }

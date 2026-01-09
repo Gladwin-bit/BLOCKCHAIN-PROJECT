@@ -9,7 +9,8 @@ import {
     login,
     getMe,
     linkWallet,
-    logout
+    logout,
+    deleteAccount
 } from '../controllers/authController.js';
 import { authenticate } from '../middleware/auth.js';
 
@@ -71,5 +72,6 @@ router.post('/login', login);
 router.get('/me', authenticate, getMe);
 router.put('/link-wallet', authenticate, linkWallet);
 router.post('/logout', authenticate, logout);
+router.delete('/account', authenticate, deleteAccount);
 
 export default router;

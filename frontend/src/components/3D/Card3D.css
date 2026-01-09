@@ -1,0 +1,55 @@
+.card-3d {
+    position: relative;
+    transition: transform 0.2s ease-out;
+    transform-style: preserve-3d;
+    will-change: transform;
+    cursor: pointer;
+}
+
+.card-3d-content {
+    position: relative;
+    z-index: 2;
+    transform: translateZ(20px);
+}
+
+.card-3d-shine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: inherit;
+    background: linear-gradient(135deg,
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.1) 50%,
+            rgba(255, 255, 255, 0) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.card-3d:hover .card-3d-shine {
+    opacity: 1;
+}
+
+/* Enhanced shadow for 3D depth */
+.card-3d::before {
+    content: '';
+    position: absolute;
+    top: 5%;
+    left: 5%;
+    right: 5%;
+    bottom: 5%;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: inherit;
+    filter: blur(20px);
+    transform: translateZ(-50px);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: -1;
+}
+
+.card-3d:hover::before {
+    opacity: 1;
+}

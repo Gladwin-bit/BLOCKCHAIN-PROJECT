@@ -10,6 +10,7 @@ import { dirname } from 'path';
 import authRoutes from './routes/auth.js';
 import certificateRoutes from './routes/certificate.js';
 import productRoutes from './routes/product.js';
+import signatureRoutes from './routes/signature.js';
 
 // Load environment variables
 dotenv.config();
@@ -37,6 +38,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/certificates', certificateRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/signature', signatureRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {

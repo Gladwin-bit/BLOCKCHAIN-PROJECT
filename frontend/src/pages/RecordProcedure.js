@@ -16,7 +16,8 @@ const RecordProcedure = () => {
     // Form State
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
-    const [secretCode, setSecretCode] = useState("");
+    const [consumerSecret, setConsumerSecret] = useState("");  // Static scratch-off code
+    const [handoverKey, setHandoverKey] = useState("");  // First B2B handover key
     const [certificateFile, setCertificateFile] = useState(null);
 
     // UI State
@@ -24,6 +25,16 @@ const RecordProcedure = () => {
     const [loading, setLoading] = useState(false);
     const [createdProduct, setCreatedProduct] = useState(null);
     const [batchResults, setBatchResults] = useState([]);
+
+    // Auto-generate both keys on component mount
+    React.useEffect(() => {
+        if (!consumerSecret) {
+            setConsumerSecret(generateShortSecretCode("CONSUMER", "SCRATCH"));
+        }
+        if (!handoverKey) {
+            setHandoverKey(generateShortSecretCode("HANDOVER", "B2B"));
+        }
+    }, [consumerSecret, handoverKey]);
 
     const handleBatchUpload = async (e) => {
         const file = e.target.files[0];
@@ -97,11 +108,9 @@ const RecordProcedure = () => {
             const certificatePath = uploadResult.path;
             console.log('Certificate uploaded:', certificateFilename);
 
-            // Step 2: Create product on blockchain with certificate filename
+            // Step 2: Create product on blockchain with DUAL KEYS
             setStatus("⛓️ Creating product on blockchain...");
-            const finalSecret = secretCode || generateShortSecretCode(name, "PROD");
-            const secretHash = ethers.keccak256(ethers.toUtf8Bytes(finalSecret));
-            const productId = await createProduct(name, finalSecret, certificateFilename);
+            const productId = await createProduct(name, consumerSecret, handoverKey, certificateFilename);
 
             // Step 3: Save to database for backup and querying
             setStatus("💾 Saving to database...");
@@ -113,7 +122,8 @@ const RecordProcedure = () => {
                         productId,
                         name,
                         manufacturerAddress: account,
-                        secretHash,
+                        consumerSecretHash: ethers.keccak256(ethers.toUtf8Bytes(consumerSecret)),
+                        currentHandoverKey: handoverKey, // Save the handover key for rolling mechanism
                         certificateFilename,
                         certificatePath
                     })
@@ -133,13 +143,15 @@ const RecordProcedure = () => {
             setCreatedProduct({
                 id: productId,
                 name: name,
-                secretCode: finalSecret
+                consumerSecret: consumerSecret,  // For scratch-off label
+                handoverKey: handoverKey  // For first distributor
             });
 
-            // Reset form
+            // Reset form and generate new keys
             setName("");
             setDescription("");
-            setSecretCode("");
+            setConsumerSecret(generateShortSecretCode("CONSUMER", "SCRATCH"));
+            setHandoverKey(generateShortSecretCode("HANDOVER", "B2B"));
             setCertificateFile(null);
         } catch (e) {
             console.error(e);
@@ -237,15 +249,38 @@ const RecordProcedure = () => {
                                 </div>
                                 <div className="input-field">
                                     <label>
-                                        Secret Verification Pin
-                                        <small>(Auto-generated if left empty)</small>
+                                        🎫 Consumer Scratch-Off Code
+                                        <small>(Print this on hidden scratch label - NEVER changes)</small>
                                     </label>
                                     <input
                                         type="text"
-                                        placeholder="Private code for ownership transfer"
-                                        value={secretCode}
-                                        onChange={(e) => setSecretCode(e.target.value)}
-                                        disabled={loading}
+                                        value={consumerSecret}
+                                        readOnly
+                                        style={{
+                                            backgroundColor: '#1a1a1a',
+                                            border: '2px solid #d4af37',
+                                            fontWeight: 'bold',
+                                            fontSize: '1.1rem',
+                                            color: '#d4af37'
+                                        }}
+                                    />
+                                </div>
+                                <div className="input-field">
+                                    <label>
+                                        🔑 First Handover Key
+                                        <small>(Give this to the Distributor - phone-to-phone)</small>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={handoverKey}
+                                        readOnly
+                                        style={{
+                                            backgroundColor: '#1a1a1a',
+                                            border: '2px solid #4CAF50',
+                                            fontWeight: 'bold',
+                                            fontSize: '1.1rem',
+                                            color: '#4CAF50'
+                                        }}
                                     />
                                 </div>
                                 <div className="input-field">
@@ -349,7 +384,18 @@ const RecordProcedure = () => {
                         />
                         <div className="result-details">
                             <p><strong>Asset ID:</strong> {createdProduct.id}</p>
-                            <p><strong>Secret Code:</strong> <code>{createdProduct.secretCode}</code></p>
+                            <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#2a2a2a', borderRadius: '8px' }}>
+                                <p style={{ color: '#d4af37', fontWeight: 'bold', marginBottom: '10px' }}>
+                                    🎫 CONSUMER SCRATCH CODE (Print on label):
+                                </p>
+                                <code style={{ fontSize: '1.2rem', color: '#d4af37' }}>{createdProduct.consumerSecret}</code>
+                            </div>
+                            <div style={{ marginTop: '15px', padding: '15px', backgroundColor: '#2a2a2a', borderRadius: '8px' }}>
+                                <p style={{ color: '#4CAF50', fontWeight: 'bold', marginBottom: '10px' }}>
+                                    🔑 HANDOVER KEY (Give to Distributor):
+                                </p>
+                                <code style={{ fontSize: '1.2rem', color: '#4CAF50' }}>{createdProduct.handoverKey}</code>
+                            </div>
                         </div>
                     </div>
                 </motion.div>

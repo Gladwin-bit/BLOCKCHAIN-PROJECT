@@ -70,7 +70,12 @@ const Login = () => {
     };
 
     return (
-        <div className="login-page">
+        <div
+            className="login-page"
+            style={{
+                '--bg-image': `url(${process.env.PUBLIC_URL}/supply-chain-bg.png)`
+            }}
+        >
             <div className="login-container">
                 <motion.div
                     className="login-card glass"

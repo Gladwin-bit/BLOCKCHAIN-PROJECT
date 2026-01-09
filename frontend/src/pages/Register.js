@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import RoleSelector from '../components/RoleSelector';
 import FileUpload from '../components/FileUpload';
+import { verifyDigitalSignature } from '../utils/signatureVerification';
 import './Register.css';
 
 const Register = () => {
@@ -22,6 +23,11 @@ const Register = () => {
     const [walletConnected, setWalletConnected] = useState(false);
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
+
+    // Digital signature verification state
+    const [certificateVerificationStatus, setCertificateVerificationStatus] = useState('idle'); // 'idle' | 'verifying' | 'verified' | 'failed'
+    const [verificationMessage, setVerificationMessage] = useState('');
+
     const { register: registerUser, isAuthenticated } = useAuth();
     const navigate = useNavigate();
 
@@ -100,6 +106,11 @@ const Register = () => {
             if (requiresCertificate && !formData.certificate) {
                 newErrors.certificate = 'Certificate is required for this role';
             }
+
+            // Check if certificate has valid digital signature
+            if (requiresCertificate && formData.certificate && certificateVerificationStatus !== 'verified') {
+                newErrors.certificate = 'Certificate must have a valid digital signature';
+            }
         }
 
         setErrors(newErrors);
@@ -132,7 +143,7 @@ const Register = () => {
         }
     };
 
-    const handleFileChange = (e) => {
+    const handleFileChange = async (e) => {
         const { name, files, error } = e.target;
 
         if (error) {
@@ -143,6 +154,48 @@ const Register = () => {
             if (errors[name]) {
                 setErrors(prev => ({ ...prev, [name]: '' }));
             }
+
+            // If certificate is uploaded and role requires it, verify digital signature
+            if (name === 'certificate' && files && files[0] && requiresCertificate) {
+                await verifyCertificateSignature(files[0]);
+            }
+        }
+    };
+
+    // Verify digital signature in certificate
+    const verifyCertificateSignature = async (file) => {
+        // Only verify PDF files
+        if (!file.name.toLowerCase().endsWith('.pdf')) {
+            setCertificateVerificationStatus('failed');
+            setVerificationMessage('Only PDF files can be verified for digital signatures');
+            setErrors(prev => ({ ...prev, certificate: 'Please upload a PDF file with a valid digital signature' }));
+            return;
+        }
+
+        setCertificateVerificationStatus('verifying');
+        setVerificationMessage('Verifying digital signature...');
+
+        try {
+            const result = await verifyDigitalSignature(file);
+
+            if (result.verified) {
+                setCertificateVerificationStatus('verified');
+                setVerificationMessage(result.message || 'Digital signature verified successfully');
+                // Clear any previous errors
+                setErrors(prev => ({ ...prev, certificate: '' }));
+            } else {
+                setCertificateVerificationStatus('failed');
+                setVerificationMessage(result.message || 'No valid digital signature found');
+                setErrors(prev => ({
+                    ...prev,
+                    certificate: 'This document does not contain a valid digital signature. Please upload a digitally signed certificate.'
+                }));
+            }
+        } catch (error) {
+            console.error('Verification error:', error);
+            setCertificateVerificationStatus('failed');
+            setVerificationMessage('Verification failed. Please try again.');
+            setErrors(prev => ({ ...prev, certificate: 'Failed to verify digital signature' }));
         }
     };
 
@@ -321,6 +374,7 @@ const Register = () => {
                                 required
                                 file={formData.certificate}
                                 error={errors.certificate}
+                                verificationStatus={certificateVerificationStatus}
                             />
                         )}
 
@@ -342,7 +396,7 @@ const Register = () => {
                                     <line x1="12" y1="9" x2="12" y2="13"></line>
                                     <line x1="12" y1="17" x2="12.01" y2="17"></line>
                                 </svg>
-                                <p>Your account will be pending admin approval until your certificate is verified.</p>
+                                <p><strong>Digital Signature Required:</strong> Your certificate must be a digitally signed PDF. Upload your certificate to verify its digital signature. Registration will only proceed with a valid signature.</p>
                             </div>
                         )}
                     </motion.div>
@@ -354,7 +408,12 @@ const Register = () => {
     };
 
     return (
-        <div className="register-page">
+        <div
+            className="register-page"
+            style={{
+                '--bg-image': `url(${process.env.PUBLIC_URL}/supply-chain-bg.png)`
+            }}
+        >
             <div className="register-container">
                 <motion.div
                     className="register-card glass"

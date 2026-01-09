@@ -1,0 +1,250 @@
+[{
+  "_id": {
+    "$oid": "695353bb69373f948339da23"
+  },
+  "email": "john@123.com",
+  "password": "$2a$10$hfZdBnGdUPYdWhFo29yRjOJvssDOiA0pAhPlEOJzTbL/HuIx21q0S",
+  "name": "john doe",
+  "role": "manufacturer",
+  "idProof": {
+    "filename": "idProof-1767068602963-911925444.png",
+    "path": "C:\\Users\\ACER\\supplychain-demo-main\\backend\\uploads\\idProof-1767068602963-911925444.png",
+    "uploadedAt": {
+      "$date": "2025-12-30T04:23:23.063Z"
+    }
+  },
+  "certificate": {
+    "filename": "certificate-1767068602964-655698355.png",
+    "path": "C:\\Users\\ACER\\supplychain-demo-main\\backend\\uploads\\certificate-1767068602964-655698355.png",
+    "uploadedAt": {
+      "$date": "2025-12-30T04:23:23.063Z"
+    }
+  },
+  "walletAddress": null,
+  "isVerified": false,
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-12-30T04:23:23.077Z"
+  },
+  "updatedAt": {
+    "$date": "2025-12-30T04:23:23.077Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69552228cdcd7a76189c05d9"
+  },
+  "email": "rahul23@gmail.com",
+  "password": "$2a$10$vK1lHY/gTGaG62yg3tt2v.CNJr7r92PHR3Dj6gNzvPfUuO9HaHK9y",
+  "name": "rahul k j",
+  "role": "distributor",
+  "idProof": {
+    "filename": "idProof-1767186984604-550599760.jpg",
+    "path": "C:\\Users\\ACER\\supplychain-demo-main\\backend\\uploads\\idProof-1767186984604-550599760.jpg",
+    "uploadedAt": {
+      "$date": "2025-12-31T13:16:24.835Z"
+    }
+  },
+  "certificate": {
+    "filename": "certificate-1767186984606-328564676.jpg",
+    "path": "C:\\Users\\ACER\\supplychain-demo-main\\backend\\uploads\\certificate-1767186984606-328564676.jpg",
+    "uploadedAt": {
+      "$date": "2025-12-31T13:16:24.835Z"
+    }
+  },
+  "walletAddress": null,
+  "isVerified": false,
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-12-31T13:16:24.847Z"
+  },
+  "updatedAt": {
+    "$date": "2025-12-31T13:16:24.847Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6955244bcdcd7a76189c05df"
+  },
+  "email": "kumarop@gmail.com",
+  "password": "$2a$10$2HUPkXEmKK7L0yQnNc9oDO1cL1fUoAIGYwGWg2FOZXypD1.WLgMnO",
+  "name": "kumar o p",
+  "role": "manufacturer",
+  "idProof": {
+    "filename": "idProof-1767187531629-299274752.jpg",
+    "path": "C:\\Users\\ACER\\supplychain-demo-main\\backend\\uploads\\idProof-1767187531629-299274752.jpg",
+    "uploadedAt": {
+      "$date": "2025-12-31T13:25:31.710Z"
+    }
+  },
+  "certificate": {
+    "filename": "certificate-1767187531699-831733441.jpg",
+    "path": "C:\\Users\\ACER\\supplychain-demo-main\\backend\\uploads\\certificate-1767187531699-831733441.jpg",
+    "uploadedAt": {
+      "$date": "2025-12-31T13:25:31.710Z"
+    }
+  },
+  "walletAddress": null,
+  "isVerified": false,
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-12-31T13:25:31.751Z"
+  },
+  "updatedAt": {
+    "$date": "2025-12-31T13:25:31.751Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69553bd4cdcd7a76189c05e3"
+  },
+  "email": "vasu123@gmail.com",
+  "password": "$2a$10$/HlNtNgTIKTRCc08yyqpPOMy65dU6PWHn1uavM.mhMrOuxUpE4dmu",
+  "name": "VASU",
+  "role": "retailer",
+  "idProof": {
+    "filename": "idProof-1767193555556-570771341.pdf",
+    "path": "C:\\Users\\ACER\\supplychain-demo-main\\backend\\uploads\\idProof-1767193555556-570771341.pdf",
+    "uploadedAt": {
+      "$date": "2025-12-31T15:05:56.333Z"
+    }
+  },
+  "certificate": {
+    "filename": "certificate-1767193555628-352172746.pdf",
+    "path": "C:\\Users\\ACER\\supplychain-demo-main\\backend\\uploads\\certificate-1767193555628-352172746.pdf",
+    "uploadedAt": {
+      "$date": "2025-12-31T15:05:56.333Z"
+    }
+  },
+  "walletAddress": null,
+  "isVerified": false,
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-12-31T15:05:56.528Z"
+  },
+  "updatedAt": {
+    "$date": "2025-12-31T15:05:56.528Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69553d70cdcd7a76189c05e6"
+  },
+  "email": "raju@gmail.com",
+  "password": "$2a$10$NEiAhjWDvmgiCkOWkfe.jubArWLdFwJZ8A3HXX.yzKgMxw//nn3di",
+  "name": "raju",
+  "role": "customer",
+  "idProof": {
+    "filename": "idProof-1767193968144-998163845.pdf",
+    "path": "C:\\Users\\ACER\\supplychain-demo-main\\backend\\uploads\\idProof-1767193968144-998163845.pdf",
+    "uploadedAt": {
+      "$date": "2025-12-31T15:12:48.436Z"
+    }
+  },
+  "walletAddress": null,
+  "isVerified": true,
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-12-31T15:12:48.440Z"
+  },
+  "updatedAt": {
+    "$date": "2025-12-31T15:12:48.440Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69579a4faaa0379e5d6283b7"
+  },
+  "email": "kanaran@gmail.com",
+  "password": "$2a$10$Ke1ICqznB5DEl989wdWdAeICFif5zMEFZVkDVOjpEwKwTN3OyNr8q",
+  "name": "kanaran",
+  "role": "manufacturer",
+  "idProof": {
+    "filename": "idProof-1767348815206-868365561.pdf",
+    "path": "C:\\Users\\ACER\\supplychain-demo-main\\backend\\uploads\\idProof-1767348815206-868365561.pdf",
+    "uploadedAt": {
+      "$date": "2026-01-02T10:13:35.258Z"
+    }
+  },
+  "certificate": {
+    "filename": "certificate-1767348815232-417325835.pdf",
+    "path": "C:\\Users\\ACER\\supplychain-demo-main\\backend\\uploads\\certificate-1767348815232-417325835.pdf",
+    "uploadedAt": {
+      "$date": "2026-01-02T10:13:35.258Z"
+    }
+  },
+  "isVerified": false,
+  "isActive": true,
+  "createdAt": {
+    "$date": "2026-01-02T10:13:35.273Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-02T10:13:35.273Z"
+  },
+  "__v": 0,
+  "walletAddress": null
+},
+{
+  "_id": {
+    "$oid": "69579e46aaa0379e5d6283ca"
+  },
+  "email": "shukkudu@gmail.com",
+  "password": "$2a$10$f9NSxhQmZoB0GCds9P9oyOue4ARLfOsQtKXK6IqPpKVE1tqFTbcaK",
+  "name": "shukkudu mp",
+  "role": "customer",
+  "idProof": {
+    "filename": "idProof-1767349830030-587583281.jpg",
+    "path": "C:\\Users\\ACER\\supplychain-demo-main\\backend\\uploads\\idProof-1767349830030-587583281.jpg",
+    "uploadedAt": {
+      "$date": "2026-01-02T10:30:30.067Z"
+    }
+  },
+  "walletAddress": null,
+  "isVerified": true,
+  "isActive": true,
+  "createdAt": {
+    "$date": "2026-01-02T10:30:30.068Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-02T10:30:30.068Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6957b24311cbeab53d8a57a8"
+  },
+  "email": "gulshan@gmail.com",
+  "password": "$2a$10$uqMR2tlDppKXLe48xaT4M.6ZzNA1ws8IaMHs2wRdde/QUsVWfkIoi",
+  "name": "gulshan singh",
+  "role": "manufacturer",
+  "idProof": {
+    "filename": "idProof-1767354947427-103870322.jpeg",
+    "path": "C:\\Users\\ACER\\supplychain-demo-main\\backend\\uploads\\idProof-1767354947427-103870322.jpeg",
+    "uploadedAt": {
+      "$date": "2026-01-02T11:55:47.490Z"
+    }
+  },
+  "certificate": {
+    "filename": "certificate-1767354947437-620923764.jpg",
+    "path": "C:\\Users\\ACER\\supplychain-demo-main\\backend\\uploads\\certificate-1767354947437-620923764.jpg",
+    "uploadedAt": {
+      "$date": "2026-01-02T11:55:47.490Z"
+    }
+  },
+  "walletAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+  "isVerified": false,
+  "isActive": true,
+  "createdAt": {
+    "$date": "2026-01-02T11:55:47.567Z"
+  },
+  "updatedAt": {
+    "$date": "2026-01-02T11:55:47.567Z"
+  },
+  "__v": 0
+}]

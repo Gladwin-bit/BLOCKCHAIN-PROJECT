@@ -28,6 +28,129 @@ const VerifyProduct = () => {
     const [product, setProduct] = useState(null);
     const [showCertificates, setShowCertificates] = useState(false);
     const [locationLoading, setLocationLoading] = useState(false);
+    const [waybillFile, setWaybillFile] = useState(null);
+    const [waybillUploaded, setWaybillUploaded] = useState(false);
+    const [activeTab, setActiveTab] = useState('manual');
+
+    // Handle waybill QR upload
+    const handleWaybillUpload = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        setLoading(true);
+        setWaybillFile(file);
+
+        try {
+            const { Html5Qrcode } = await import('html5-qrcode');
+            const html5QrCode = new Html5Qrcode("qr-reader-hidden");
+
+            const qrCodeSuccessCallback = async (decodedText) => {
+                try {
+                    console.log("Waybill QR Scanned:", decodedText);
+                    const waybillData = JSON.parse(decodedText);
+
+                    if (waybillData.productId) {
+                        setProductId(waybillData.productId);
+                        setWaybillUploaded(true);
+                        toast.success("Waybill scanned! Now enter your scratch-off code.");
+                        setStatus({
+                            type: "info",
+                            title: "WAYBILL VERIFIED",
+                            msg: `Product #${waybillData.productId} identified. Enter your scratch-off code to verify authenticity.`,
+                            icon: <CheckCircle2 className="status-icon" />
+                        });
+                    } else {
+                        throw new Error("Invalid waybill format");
+                    }
+                } catch (parseError) {
+                    console.error("Parse error:", parseError);
+                    toast.error("Invalid waybill QR code");
+                    setStatus({
+                        type: "error",
+                        title: "INVALID WAYBILL",
+                        msg: "The QR code is not a valid waybill.",
+                        icon: <AlertTriangle className="status-icon" />
+                    });
+                }
+                html5QrCode.clear();
+            };
+
+            await html5QrCode.scanFile(file, true)
+                .then(qrCodeSuccessCallback)
+                .catch(err => {
+                    console.error("QR scan error:", err);
+                    toast.error("Failed to read QR code");
+                });
+
+        } catch (error) {
+            console.error("Upload error:", error);
+            toast.error("Failed to process waybill");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleManualVerify = async () => {
+        if (!productId || !secretCode) {
+            toast.warn("Please upload waybill and enter scratch-off code");
+            return;
+        }
+
+        setLoading(true);
+        setStatus({
+            type: "loading",
+            title: "VERIFYING ASSET",
+            msg: "Checking blockchain records...",
+            icon: <ShieldCheck className="status-icon animate-spin" />
+        });
+
+        try {
+            const data = await getProductData(productId);
+            setProduct(data);
+
+            // Fetch the Keccak256 hash of the entered secret to compare
+            const { ethers } = await import("ethers");
+            const inputHash = ethers.keccak256(ethers.toUtf8Bytes(secretCode));
+
+            if (data.consumerSecretHash === inputHash) {
+                if (data.isConsumed || (data.customerClaim && data.customerClaim.isClaimed)) {
+                    setStatus({
+                        type: "info",
+                        title: "ALREADY CLAIMED",
+                        msg: "This product is authentic but has already been claimed.",
+                        icon: <CheckCircle2 className="status-icon" />
+                    });
+                } else {
+                    setStatus({
+                        type: "success",
+                        title: "AUTHENTICITY VERIFIED",
+                        msg: "Secret key matches! You can now claim ownership below.",
+                        icon: <ShieldCheck className="status-icon" />
+                    });
+                    toast.success("✅ Asset Verified Successfully!");
+                }
+            } else {
+                setStatus({
+                    type: "error",
+                    title: "VERIFICATION FAILED",
+                    msg: "The secret key entered does not match this product's record.",
+                    icon: <AlertTriangle className="status-icon" />
+                });
+                toast.error("Verification failed: Invalid Secret Key");
+            }
+        } catch (err) {
+            console.error(err);
+            setStatus({
+                type: "error",
+                title: "NOT FOUND",
+                msg: `Product #${productId} could not be located on the blockchain.`,
+                icon: <AlertTriangle className="status-icon" />
+            });
+            toast.error("Product not found");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleQRUpload = async (e) => {
         const file = e.target.files[0];
@@ -252,33 +375,102 @@ const VerifyProduct = () => {
             </header>
 
             <div className="verify-content">
-                {/* QR Upload Section */}
-                <motion.div className="qr-upload-section glass">
-                    <div className="upload-icon">
-                        <QrCode size={48} />
-                    </div>
-                    <h3>Upload QR Code</h3>
-                    <p>Upload the QR code image hidden inside your product packaging</p>
+                {/* Method Selector Tabs */}
+                <div className="method-tabs">
+                    <button
+                        className={`tab-btn ${activeTab === "qr" ? "active" : ""}`}
+                        onClick={() => setActiveTab("qr")}
+                    >
+                        <QrCode size={18} />
+                        Scan QR
+                    </button>
+                    <button
+                        className={`tab-btn ${activeTab === "manual" ? "active" : ""}`}
+                        onClick={() => setActiveTab("manual")}
+                    >
+                        <FileText size={18} />
+                        Manual Entry
+                    </button>
+                </div>
 
-                    <label className="upload-button">
-                        <Upload size={20} />
-                        <span>Choose QR Code Image</span>
-                        <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleQRUpload}
-                            hidden
-                            disabled={loading}
-                        />
-                    </label>
+                <AnimatePresence mode="wait">
+                    {activeTab === "qr" ? (
+                        /* QR Upload Section */
+                        <motion.div
+                            key="qr-section"
+                            className="qr-upload-section glass"
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                        >
+                            <div className="upload-icon">
+                                <QrCode size={48} />
+                            </div>
+                            <h3>Upload QR Code</h3>
+                            <p>Upload the QR code image hidden inside your product packaging</p>
 
-                    {loading && !locationLoading && (
-                        <div className="loading-indicator">
-                            <div className="spinner"></div>
-                            <p>Scanning QR code...</p>
-                        </div>
+                            <label className="upload-button">
+                                <Upload size={20} />
+                                <span>Choose QR Code Image</span>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleQRUpload}
+                                    hidden
+                                    disabled={loading}
+                                />
+                            </label>
+
+                            {loading && activeTab === "qr" && (
+                                <div className="loading-indicator">
+                                    <div className="spinner"></div>
+                                    <p>Scanning QR code...</p>
+                                </div>
+                            )}
+                        </motion.div>
+                    ) : (
+                        /* Manual Entry Section */
+                        <motion.div
+                            key="manual-section"
+                            className="manual-entry-section glass"
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                        >
+                            <div className="upload-icon">
+                                <FileText size={48} />
+                            </div>
+                            <h3>Manual Verification</h3>
+                            <p>Enter the Product ID and Secret Key provided by the manufacturer</p>
+
+                            <div className="manual-form">
+                                {/* Waybill QR Upload */}
+                                <div className="input-field-group">
+                                    <label> Upload Waybill QR Code</label>
+                                    <div id="qr-reader-hidden" style={{ display: "none" }}></div>
+                                    <input type="file" accept="image/*" onChange={handleWaybillUpload} disabled={loading} />
+                                </div>
+                                <div className="input-field-group">
+                                    <label> Consumer Scratch-Off Code</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Enter Secret Key"
+                                        value={secretCode}
+                                        onChange={(e) => setSecretCode(e.target.value)}
+                                        disabled={loading}
+                                    />
+                                </div>
+                                <button
+                                    className="btn btn-primary"
+                                    onClick={handleManualVerify}
+                                    disabled={loading || !productId || !secretCode}
+                                >
+                                    {loading ? "Verifying..." : "Verify Asset"}
+                                </button>
+                            </div>
+                        </motion.div>
                     )}
-                </motion.div>
+                </AnimatePresence>
 
                 {/* Status Display */}
                 <AnimatePresence mode="wait">
@@ -433,3 +625,6 @@ const VerifyProduct = () => {
 };
 
 export default VerifyProduct;
+
+
+

@@ -59,8 +59,9 @@ contract SupplyChain is AccessControl {
         string name;
         address currentOwner; 
         State state;
-        bytes32 currentSecretHash;  // Dynamic Secret Key Hash (Updates after every transfer)
-        bytes32 currentHandoverHash; // Rolling Handover Hash (Dynamic QR for hops)
+        bytes32 consumerSecretHash;  // STATIC: Scratch-off code for final customer claim (never changes)
+        bytes32 currentHandoverHash; // DYNAMIC: Rolling handover key for B2B transfers
+        bool isConsumed;             // Prevents double-claiming by customers
         bool exists;
         VerificationLog[] verificationHistory;
         CustomerClaim customerClaim;  // Customer ownership data
@@ -110,10 +111,19 @@ contract SupplyChain is AccessControl {
     }
 
     /**
-     * @notice Phase 1: Initiation
-     * @dev Manufacturer creates the product item with an associated secret hash for the buy claim.
+     * @notice Phase 1: Product Creation with Dual-Key Security
+     * @dev Manufacturer creates product with BOTH consumer scratch code AND first handover key
+     * @param _name Product name
+     * @param _consumerSecretHash Static scratch-off code hash (NEVER changes, for final customer)
+     * @param _firstHandoverHash Initial handover key hash (for first B2B transfer)
+     * @param _productCertificate Certificate/warranty document filename
      */
-    function createProduct(string calldata _name, bytes32 _secretHash, string calldata _productCertificate) 
+    function createProduct(
+        string calldata _name, 
+        bytes32 _consumerSecretHash,
+        bytes32 _firstHandoverHash,
+        string calldata _productCertificate
+    ) 
         external 
         returns (uint256) 
     {
@@ -125,10 +135,11 @@ contract SupplyChain is AccessControl {
         newProduct.name = _name;
         newProduct.currentOwner = msg.sender;
         newProduct.state = State.Created;
-        newProduct.currentSecretHash = _secretHash;
-        newProduct.currentHandoverHash = bytes32(0);
+        newProduct.consumerSecretHash = _consumerSecretHash;  // Static: for customer claim
+        newProduct.currentHandoverHash = _firstHandoverHash;  // Dynamic: for first B2B transfer
+        newProduct.isConsumed = false;  // Not yet claimed by customer
         newProduct.exists = true;
-        newProduct.productCertificate = _productCertificate;  // Store product certificate
+        newProduct.productCertificate = _productCertificate;
 
         _pushHistory(newId, State.Created, "Factory");
         emit ProductCreated(newId, msg.sender, _name);
@@ -136,83 +147,33 @@ contract SupplyChain is AccessControl {
     }
 
     /**
-     * @notice Task 1: Update Secret (Dynamic "Hot Potato" Logic)
-     * @dev Used by Manufacturer/Distributor/Retailer to set the lock for the next person.
+     * @notice B2B Custody Transfer with Rolling Handover Keys
+     * @dev Distributor/Retailer accepts custody using incoming key and sets new key for next recipient
+     * @param _id Product ID
+     * @param _incomingKey The handover key provided by previous owner (proof of authorization)
+     * @param _nextKeyHash Hash of new key for the next recipient in the chain
+     * @param _location Current location
      */
-    function updateSecret(uint256 _id, bytes32 _newHash) 
-        external 
-        productExists(_id)
-        onlyCurrentOwner(_id)
-        notSold(_id)
-    {
-        products[_id].currentSecretHash = _newHash;
-        emit HandoverGenerated(_id, msg.sender); // Reuse or create new event if needed
-    }
-
-    /**
-     * @notice Task 1: Verify & Claim (Last-Mile Secret Logic)
-     * @dev Consumer takes final ownership or re-verifies authenticity.
-     */
-    function verifyAndClaim(uint256 _id, string memory _secretKey) 
-        external 
-        productExists(_id)
-    {
-        // 1. Check keccak256(_secretKey) == currentSecretHash
-        require(keccak256(abi.encodePacked(_secretKey)) == products[_id].currentSecretHash, "Security: Invalid secret code provided");
-
-        VerificationRecord storage record = verifyLog[_id];
-
-        // 2. If Match: First time claim
-        if (record.time == 0) {
-            address prevOwner = products[_id].currentOwner;
-            products[_id].currentOwner = msg.sender;
-            products[_id].state = State.Sold;
-
-            // Store block.timestamp and msg.sender in verifyLog
-            record.verifier = msg.sender;
-            record.time = block.timestamp;
-            record.isFirstClaim = true;
-
-            _pushHistory(_id, State.Sold, "End Consumer");
-            emit ProductClaimed(_id, msg.sender);
-            emit OwnershipTransferred(_id, prevOwner, msg.sender);
-        } 
-        // 3. If Match: Already claimed (Re-verification)
-        else {
-            emit ProductReverified(_id, msg.sender, record.time, record.verifier);
-            // DO NOT REVERT. Just return status (handled by event and frontend)
-        }
-    }
-
-    /**
-     * @notice Rolling Handover: Phase A (Sender)
-     * @dev Generates a rolling hash that the receiver must match.
-     */
-    function generateHandover(uint256 _id, bytes32 _newHash) 
-        external 
-        productExists(_id) 
-        onlyCurrentOwner(_id) 
-        notSold(_id)
-    {
-        products[_id].currentHandoverHash = _newHash;
-        emit HandoverGenerated(_id, msg.sender);
-    }
-
-    /**
-     * @notice Rolling Handover: Phase B (Receiver)
-     * @dev Accepts custody by providing the secret key that matches currentHandoverHash.
-     */
-    function acceptHandover(uint256 _id, string memory _secretKey, bytes32 _nextHash, string memory _location) 
+    function transferCustody(
+        uint256 _id, 
+        string memory _incomingKey, 
+        bytes32 _nextKeyHash, 
+        string memory _location
+    ) 
         external 
         productExists(_id) 
         notSold(_id)
     {
-        require(keccak256(abi.encodePacked(_secretKey)) == products[_id].currentHandoverHash, "Security: Invalid handover pass provided");
+        // Verify: incoming key must match current handover hash
+        require(
+            keccak256(abi.encodePacked(_incomingKey)) == products[_id].currentHandoverHash, 
+            "Security: Invalid handover key provided"
+        );
         
         address prevOwner = products[_id].currentOwner;
         products[_id].currentOwner = msg.sender;
         
-        // Rolling Logic: Update state based on receiver role (Optional/Role-based)
+        // Update state based on receiver role
         if (hasRole(DISTRIBUTOR_ROLE, msg.sender)) {
             products[_id].state = State.InTransit;
         } else if (hasRole(RETAILER_ROLE, msg.sender)) {
@@ -221,8 +182,8 @@ contract SupplyChain is AccessControl {
             products[_id].state = State.InTransit; // Default for partners
         }
 
-        // Wipe old handover hash, set new rolling hash for the NEXT recipient
-        products[_id].currentHandoverHash = _nextHash;
+        // ROLL THE KEY: Set new handover hash for next recipient
+        products[_id].currentHandoverHash = _nextKeyHash;
         
         _pushHistory(_id, products[_id].state, _location);
         emit CustodyTransferred(_id, prevOwner, msg.sender, _location);
@@ -266,30 +227,38 @@ contract SupplyChain is AccessControl {
     }
 
     /**
-     * @notice Customer Ownership Claim
-     * @dev Allows a customer to claim ownership of a product with their name and location
+     * @notice Customer Ownership Claim with Static Scratch-Off Code
+     * @dev Final customer claims ownership using the scratch code (consumerSecretHash)
+     * @param _id Product ID
+     * @param _scratchCode The scratch-off code revealed by customer
+     * @param _customerName Customer's name
+     * @param _location Customer's location
      */
-    function claimCustomerOwnership(
+    function claimOwnership(
         uint256 _id, 
-        string memory _secretKey, 
+        string memory _scratchCode, 
         string memory _customerName, 
         string memory _location
     ) 
         external 
         productExists(_id)
     {
-        // Verify the secret code
-        require(keccak256(abi.encodePacked(_secretKey)) == products[_id].currentSecretHash, "Security: Invalid secret code provided");
+        // Verify: scratch code must match the static consumer secret hash
+        require(
+            keccak256(abi.encodePacked(_scratchCode)) == products[_id].consumerSecretHash, 
+            "Security: Invalid scratch-off code provided"
+        );
         
-        // Check if already claimed
-        require(!products[_id].customerClaim.isClaimed, "Product: Already claimed by a customer");
+        // Prevent double-claiming
+        require(!products[_id].isConsumed, "Product: Already claimed by a customer");
         
-        // Update product ownership
+        // Transfer ownership to customer
         address prevOwner = products[_id].currentOwner;
         products[_id].currentOwner = msg.sender;
         products[_id].state = State.Sold;
+        products[_id].isConsumed = true;  // Mark as consumed
         
-        // Record customer claim
+        // Record customer claim data
         products[_id].customerClaim = CustomerClaim({
             customerName: _customerName,
             location: _location,

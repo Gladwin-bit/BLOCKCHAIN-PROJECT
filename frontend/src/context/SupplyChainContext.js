@@ -96,11 +96,12 @@ export const SupplyChainProvider = ({ children }) => {
         }
     }, [updateConnection]);
 
-    const createProduct = async (name, secretCode, productCertificate = "") => {
+    const createProduct = async (name, consumerSecret, handoverKey, productCertificate = "") => {
         if (!contract) throw new Error("Wallet not connected");
-        const secretHash = ethers.keccak256(ethers.toUtf8Bytes(secretCode));
+        const consumerHash = ethers.keccak256(ethers.toUtf8Bytes(consumerSecret));
+        const handoverHash = ethers.keccak256(ethers.toUtf8Bytes(handoverKey));
         toast.info("Initiating Product on Ledger...");
-        const tx = await contract.createProduct(name, secretHash, productCertificate);
+        const tx = await contract.createProduct(name, consumerHash, handoverHash, productCertificate);
         const receipt = await tx.wait();
         const event = receipt.logs
             .map(log => { try { return contract.interface.parseLog(log); } catch (e) { return null; } })
@@ -131,8 +132,9 @@ export const SupplyChainProvider = ({ children }) => {
             currentOwner: p.currentOwner,
             state: PRODUCT_STATES[p.state],
             stateRaw: p.state,
-            currentSecretHash: p.currentSecretHash,
-            currentHandoverHash: p.currentHandoverHash,
+            consumerSecretHash: p.consumerSecretHash,  // Static scratch code hash
+            currentHandoverHash: p.currentHandoverHash,  // Rolling B2B key hash
+            isConsumed: p.isConsumed,  // Whether customer has claimed
             customerClaim: (p.customerClaim && p.customerClaim.isClaimed) ? {
                 customerName: p.customerClaim.customerName,
                 location: p.customerClaim.location,
