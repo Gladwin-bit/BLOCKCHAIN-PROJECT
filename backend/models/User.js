@@ -36,7 +36,6 @@ const userSchema = new mongoose.Schema({
     },
     certificate: {
         filename: String,
-        path: String,
         uploadedAt: Date,
         digitalSignature: {
             verified: {
@@ -47,6 +46,7 @@ const userSchema = new mongoose.Schema({
             signatureCount: Number,
             details: mongoose.Schema.Types.Mixed
         }
+        // Note: IPFS hash is stored on blockchain, not in MongoDB
     },
     walletAddress: {
         type: String,

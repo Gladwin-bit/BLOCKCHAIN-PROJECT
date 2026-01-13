@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import RoleSelector from '../components/RoleSelector';
 import FileUpload from '../components/FileUpload';
 import { verifyDigitalSignature } from '../utils/signatureVerification';
+import { registerCertificateOnBlockchain } from '../utils/certificateBlockchain';
 import './Register.css';
 
 const Register = () => {
@@ -23,6 +24,7 @@ const Register = () => {
     const [walletConnected, setWalletConnected] = useState(false);
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
+    const [registrationStatus, setRegistrationStatus] = useState(''); // Status message for user
 
     // Digital signature verification state
     const [certificateVerificationStatus, setCertificateVerificationStatus] = useState('idle'); // 'idle' | 'verifying' | 'verified' | 'failed'
@@ -212,25 +214,75 @@ const Register = () => {
         }
 
         setLoading(true);
+        setRegistrationStatus('Creating account and uploading certificate to IPFS...');
 
-        // Create FormData for file upload
-        const submitData = new FormData();
-        submitData.append('email', formData.email);
-        submitData.append('password', formData.password);
-        submitData.append('name', formData.name);
-        submitData.append('role', formData.role);
-        submitData.append('walletAddress', walletAddress); // Add wallet address
-        submitData.append('idProof', formData.idProof);
+        try {
+            // Create FormData for file upload
+            const submitData = new FormData();
+            submitData.append('email', formData.email);
+            submitData.append('password', formData.password);
+            submitData.append('name', formData.name);
+            submitData.append('role', formData.role);
+            submitData.append('walletAddress', walletAddress);
+            submitData.append('idProof', formData.idProof);
 
-        if (formData.certificate) {
-            submitData.append('certificate', formData.certificate);
-        }
+            if (formData.certificate) {
+                submitData.append('certificate', formData.certificate);
+            }
 
-        const result = await registerUser(submitData);
-        setLoading(false);
+            // Step 1: Register user (uploads to IPFS, creates account)
+            const result = await registerUser(submitData);
 
-        if (result.success) {
-            navigate('/');
+            if (!result.success) {
+                setLoading(false);
+                setRegistrationStatus('');
+                return;
+            }
+
+            // Step 2: If certificate uploaded, register on blockchain
+            if (result.certificateIpfsHash && formData.role !== 'customer') {
+                setRegistrationStatus('Please sign the blockchain transaction in MetaMask...');
+
+                try {
+                    const txResult = await registerCertificateOnBlockchain(result.certificateIpfsHash);
+
+                    console.log('Certificate registered on blockchain:', txResult);
+                    setRegistrationStatus(`Success! Transaction: ${txResult.transactionHash.slice(0, 10)}...`);
+
+                    // Wait a moment to show success message
+                    setTimeout(() => {
+                        setLoading(false);
+                        navigate('/');
+                    }, 2000);
+
+                } catch (blockchainError) {
+                    console.error('Blockchain registration error:', blockchainError);
+
+                    // Account created but blockchain registration failed
+                    setLoading(false);
+                    setRegistrationStatus('');
+
+                    // Show error but allow user to continue
+                    setErrors({
+                        blockchain: blockchainError.message || 'Failed to register certificate on blockchain. You can register it later from your profile.'
+                    });
+
+                    // Still navigate after showing error
+                    setTimeout(() => {
+                        navigate('/');
+                    }, 3000);
+                }
+            } else {
+                // Customer registration (no certificate)
+                setLoading(false);
+                navigate('/');
+            }
+
+        } catch (error) {
+            console.error('Registration error:', error);
+            setLoading(false);
+            setRegistrationStatus('');
+            setErrors({ submit: error.message || 'Registration failed' });
         }
     };
 
@@ -450,6 +502,20 @@ const Register = () => {
                         <AnimatePresence mode="wait">
                             {renderStep()}
                         </AnimatePresence>
+
+                        {/* Registration Status Message */}
+                        {registrationStatus && (
+                            <div className="info-box" style={{ marginTop: '1rem', textAlign: 'center' }}>
+                                <p>{registrationStatus}</p>
+                            </div>
+                        )}
+
+                        {/* Blockchain Error Message */}
+                        {errors.blockchain && (
+                            <div className="info-box warning" style={{ marginTop: '1rem' }}>
+                                <p>{errors.blockchain}</p>
+                            </div>
+                        )}
 
                         <div className="form-actions">
                             {step > 1 && (

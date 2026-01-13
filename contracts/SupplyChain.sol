@@ -72,6 +72,9 @@ contract SupplyChain is AccessControl {
     mapping(uint256 => Product) public products;
     mapping(uint256 => HistoryEntry[]) public productHistory;
     mapping(uint256 => VerificationRecord) public verifyLog; // First claim record
+    
+    // User authorization certificates stored on IPFS
+    mapping(address => string) public userCertificateIPFS;
 
     // --- Phase 3: Event-Driven Architecture (Crucial for Tracing) ---
     // Indexed parameters allow for high-speed frontend filtering of large logs
@@ -83,6 +86,7 @@ contract SupplyChain is AccessControl {
     event OwnershipTransferred(uint indexed id, address indexed from, address indexed to);
     event ProductVerified(uint256 indexed id, address indexed verifier, uint256 timestamp);
     event CustomerOwnershipClaimed(uint256 indexed id, address indexed customer, string customerName, string location, uint256 timestamp);
+    event UserCertificateRegistered(address indexed user, string ipfsHash);
 
     // --- Modifiers for Clean Code & Logic Enforcement ---
     modifier onlyCurrentOwner(uint256 _id) {
@@ -273,6 +277,26 @@ contract SupplyChain is AccessControl {
         // Emit events
         emit CustomerOwnershipClaimed(_id, msg.sender, _customerName, _location, block.timestamp);
         emit OwnershipTransferred(_id, prevOwner, msg.sender);
+    }
+
+    /**
+     * @notice Register user's authorization certificate IPFS hash
+     * @dev Stores IPFS hash for user's authorization certificate
+     * @param _ipfsHash IPFS hash (CID) of the certificate
+     */
+    function registerUserCertificate(string calldata _ipfsHash) external {
+        require(bytes(_ipfsHash).length > 0, "IPFS hash cannot be empty");
+        userCertificateIPFS[msg.sender] = _ipfsHash;
+        emit UserCertificateRegistered(msg.sender, _ipfsHash);
+    }
+
+    /**
+     * @notice Get user's certificate IPFS hash
+     * @param _userAddress User's wallet address
+     * @return IPFS hash of the user's certificate
+     */
+    function getUserCertificate(address _userAddress) external view returns (string memory) {
+        return userCertificateIPFS[_userAddress];
     }
 
     // --- Internal Helpers ---

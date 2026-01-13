@@ -106,12 +106,38 @@ export const getCertificatesForProduct = async (req, res) => {
             hasIdProof: !!manufacturer.idProof
         };
 
-        if (manufacturer.certificate) {
-            certificateData.certificate = {
-                filename: manufacturer.certificate.filename,
-                uploadedAt: manufacturer.certificate.uploadedAt,
-                url: `/uploads/${manufacturer.certificate.filename}`
-            };
+        // Fetch certificate IPFS hash from blockchain
+        try {
+            console.log('Fetching certificate IPFS hash from blockchain...');
+            const ipfsHash = await contract.getUserCertificate(manufacturerAddress);
+
+            if (ipfsHash && ipfsHash.trim() !== '') {
+                console.log('Certificate IPFS hash found:', ipfsHash);
+                certificateData.certificate = {
+                    filename: manufacturer.certificate?.filename || 'certificate.pdf',
+                    uploadedAt: manufacturer.certificate?.uploadedAt,
+                    ipfsHash: ipfsHash,
+                    url: `https://gateway.pinata.cloud/ipfs/${ipfsHash}`
+                };
+            } else if (manufacturer.certificate) {
+                console.log('No IPFS hash on blockchain, using legacy local path');
+                // Fallback for old certificates stored locally (before IPFS migration)
+                certificateData.certificate = {
+                    filename: manufacturer.certificate.filename,
+                    uploadedAt: manufacturer.certificate.uploadedAt,
+                    url: `/uploads/${manufacturer.certificate.filename}`
+                };
+            }
+        } catch (blockchainError) {
+            console.error('Error fetching IPFS hash from blockchain:', blockchainError.message);
+            // Fallback to local path if blockchain fetch fails
+            if (manufacturer.certificate) {
+                certificateData.certificate = {
+                    filename: manufacturer.certificate.filename,
+                    uploadedAt: manufacturer.certificate.uploadedAt,
+                    url: `/uploads/${manufacturer.certificate.filename}`
+                };
+            }
         }
 
         if (manufacturer.idProof) {

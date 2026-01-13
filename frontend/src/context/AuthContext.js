@@ -72,7 +72,11 @@ export const AuthProvider = ({ children }) => {
                 setUser(response.user);
                 setIsAuthenticated(true);
                 toast.success(response.message || 'Registration successful!');
-                return { success: true, user: response.user };
+                return {
+                    success: true,
+                    user: response.user,
+                    certificateIpfsHash: response.certificateIpfsHash // Pass IPFS hash to Register component
+                };
             }
         } catch (error) {
             const message = error.response?.data?.message || 'Registration failed';

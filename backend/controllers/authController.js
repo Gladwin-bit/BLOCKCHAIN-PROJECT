@@ -2,6 +2,7 @@ import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 import fs from 'fs';
 import path from 'path';
+import ipfsService from '../services/ipfsService.js';
 
 /**
  * Generate JWT token
@@ -98,13 +99,48 @@ export const register = async (req, res) => {
             }
         };
 
-        // Add certificate if provided
+        // Handle certificate upload to IPFS and blockchain
+        let ipfsHash = null;
+        let certificateFile = null;
+
         if (req.files?.certificate) {
-            userData.certificate = {
-                filename: req.files.certificate[0].filename,
-                path: req.files.certificate[0].path,
-                uploadedAt: new Date()
-            };
+            certificateFile = req.files.certificate[0];
+
+            try {
+                console.log('📤 Uploading certificate to IPFS...');
+
+                // 1. Upload to IPFS via Pinata
+                const ipfsResult = await ipfsService.uploadFile(certificateFile);
+                ipfsHash = ipfsResult.ipfsHash;
+
+                console.log('✅ Certificate uploaded to IPFS:', ipfsHash);
+
+                // 2. Store metadata in MongoDB (IPFS hash will be on blockchain)
+                userData.certificate = {
+                    filename: certificateFile.filename,
+                    uploadedAt: new Date()
+                };
+
+            } catch (ipfsError) {
+                console.error('❌ IPFS upload failed:', ipfsError.message);
+
+                // Clean up uploaded files
+                if (req.files) {
+                    Object.values(req.files).forEach(fileArray => {
+                        fileArray.forEach(file => {
+                            if (fs.existsSync(file.path)) {
+                                fs.unlinkSync(file.path);
+                            }
+                        });
+                    });
+                }
+
+                return res.status(500).json({
+                    success: false,
+                    message: 'Failed to upload certificate to IPFS',
+                    error: ipfsError.message
+                });
+            }
         }
 
         // Auto-verify customers, others need admin approval
@@ -112,8 +148,15 @@ export const register = async (req, res) => {
 
         // Create user
         const user = await User.create(userData);
+        console.log('✅ User created in database:', user.email);
 
-        console.log('User registered with wallet:', walletAddress);
+        // Delete local certificate file after successful upload
+        if (certificateFile && fs.existsSync(certificateFile.path)) {
+            fs.unlinkSync(certificateFile.path);
+            console.log('🗑️ Local certificate file deleted');
+        }
+
+        console.log('✅ User registered successfully:', walletAddress);
 
         // Generate token
         const token = generateToken(user._id);
@@ -122,7 +165,7 @@ export const register = async (req, res) => {
             success: true,
             message: role === 'customer'
                 ? 'Registration successful! You can now log in.'
-                : 'Registration successful! Your account is pending admin approval.',
+                : 'Registration successful! Please sign the blockchain transaction to complete registration.',
             token,
             user: {
                 id: user._id,
@@ -131,7 +174,9 @@ export const register = async (req, res) => {
                 role: user.role,
                 isVerified: user.isVerified,
                 walletAddress: user.walletAddress
-            }
+            },
+            // Return IPFS hash for frontend to register on blockchain
+            certificateIpfsHash: ipfsHash
         });
     } catch (error) {
         console.error('Registration error:', error);
@@ -348,30 +393,22 @@ export const deleteAccount = async (req, res) => {
             });
         }
 
-        // Delete uploaded files (ID proof and certificate)
-        const filesToDelete = [];
-
+        // Delete uploaded ID proof file (certificate is on IPFS, not local)
         if (user.idProof && user.idProof.path) {
-            filesToDelete.push(user.idProof.path);
-        }
-
-        if (user.certificate && user.certificate.path) {
-            filesToDelete.push(user.certificate.path);
-        }
-
-        // Delete files from filesystem
-        for (const filePath of filesToDelete) {
             try {
-                const fullPath = path.join(process.cwd(), filePath);
+                const fullPath = path.join(process.cwd(), user.idProof.path);
                 if (fs.existsSync(fullPath)) {
                     fs.unlinkSync(fullPath);
-                    console.log('Deleted file:', fullPath);
+                    console.log('Deleted ID proof file:', fullPath);
                 }
             } catch (fileError) {
-                console.error('Error deleting file:', fileError.message);
+                console.error('Error deleting ID proof file:', fileError.message);
                 // Continue even if file deletion fails
             }
         }
+
+        // Note: Certificate is stored on IPFS and hash is on blockchain
+        // IPFS files are immutable and remain accessible even after account deletion
 
         // Delete user from database
         await User.findByIdAndDelete(userId);
