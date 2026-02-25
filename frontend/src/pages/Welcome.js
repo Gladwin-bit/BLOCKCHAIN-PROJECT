@@ -3,23 +3,20 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
+import { ShieldCheck, Sparkles, Map, Award, ArrowRight, LogIn, Search } from 'lucide-react';
 import { useSupplyChain } from "../hooks/useSupplyChain";
-import SceneBackground from "../components/3D/SceneBackground";
-import Card3D from "../components/3D/Card3D";
-import FloatingElements from "../components/3D/FloatingElements";
-import Hero3DObject from "../components/3D/Hero3DObject";
 import SmoothScroll from "../components/SmoothScroll";
 import ScrollReveal from "../components/animations/ScrollReveal";
 import "./Welcome.css";
+import "./VerifyStyles.css";
 
 const Welcome = () => {
     const { isAuthenticated } = useAuth();
     const navigate = useNavigate();
     const { contract, readOnlyContract } = useSupplyChain();
     const [liveStats, setLiveStats] = useState({ products: 0, verifications: 0, transfers: 0 });
+    const [verifyCode, setVerifyCode] = useState('');
     const { scrollY } = useScroll();
-    const y1 = useTransform(scrollY, [0, 500], [0, 200]);
-    const y2 = useTransform(scrollY, [0, 500], [0, -150]);
 
     // Redirect if already authenticated
     useEffect(() => {
@@ -51,27 +48,25 @@ const Welcome = () => {
         fetchStats();
     }, [contract, readOnlyContract]);
 
+    const handleVerify = () => {
+        if (verifyCode.trim()) {
+            navigate(`/verify-product?code=${verifyCode}`);
+        }
+    };
+
     const features = [
-        { title: "Immutable Registry", desc: "Every product starts its journey as a cryptographic entity on the blockchain.", icon: "💎" },
-        { title: "Trustless Handover", desc: "Dynamic secret keys ensure only the rightful owner can accept custody.", icon: "🔑" },
-        { title: "Consumer Trust", desc: "Instant verification for end-users via scan-and-claim technology.", icon: "🛡️" },
-        { title: "End-to-End Visibility", desc: "Trace every hop in the supply chain with timestamped precision.", icon: "🌍" }
+        { title: "Digital Handloom Mark", desc: "Each saree is registered on blockchain with a unique certificate of authenticity.", icon: <Award /> },
+        { title: "Direct from Weaver", desc: "Transparent chain from artisan's loom to your wardrobe, supporting local weavers.", icon: <Sparkles /> },
+        { title: "Verify Authenticity", desc: "Instantly check if your saree is genuine with our blockchain verification system.", icon: <ShieldCheck /> },
+        { title: "Track Your Saree's Journey", desc: "Trace every step from weaving to delivery with complete timestamp records.", icon: <Map /> }
     ];
 
     return (
         <SmoothScroll>
-            <div
-                className="welcome-page"
-                style={{
-                    '--bg-image': `url(${process.env.PUBLIC_URL}/supply-chain-bg.png)`
-                }}
-            >
+            <div className="welcome-page">
                 <div className="dynamic-glow glow-1"></div>
                 <div className="dynamic-glow glow-2"></div>
-                <SceneBackground />
                 <section className="welcome-hero">
-                    <FloatingElements />
-                    <Hero3DObject />
 
                     <div className="hero-content">
                         <motion.div
@@ -79,40 +74,57 @@ const Welcome = () => {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8, ease: "easeOut" }}
                         >
-                            <span className="hero-tag">Enterprise Blockchain Solution</span>
-                            <h1>Secure the<br /><span className="text-glow">Supply Chain</span></h1>
-                            <p>Eliminate counterfeits and establish absolute trust with our decentralized asset management protocol.</p>
+                            <span className="hero-tag">Kasaragod Handloom Heritage</span>
+                            <h1>Authentic Kasaragod<br /><span className="text-glow">Sarees</span></h1>
+                            <p>Verify the authenticity of your handloom saree with blockchain technology. Every thread tells a story from weaver to wearer.</p>
 
                             <motion.div
-                                className="hero-actions"
+                                className="hero-cta"
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.5, duration: 0.8 }}
                             >
                                 <Link to="/register" className="btn btn-primary">
-                                    <span>Get Started</span>
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                                    Register Your Business
+                                    <ArrowRight size={20} style={{ marginLeft: '10px' }} />
                                 </Link>
                                 <Link to="/login" className="btn btn-secondary">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
-                                    <span>Sign In</span>
+                                    <LogIn size={20} style={{ marginRight: '10px' }} />
+                                    Sign In
                                 </Link>
                             </motion.div>
                         </motion.div>
 
-                        <ScrollReveal direction="up" distance={40} delay={0.2}>
+                        {/* Verification Section */}
+                        <ScrollReveal direction="up" distance={30} delay={0.3}>
+                            <div className="verify-section">
+                                <input
+                                    type="text"
+                                    className="verify-input"
+                                    placeholder="Enter your saree verification code"
+                                    value={verifyCode}
+                                    onChange={(e) => setVerifyCode(e.target.value)}
+                                    onKeyPress={(e) => e.key === 'Enter' && handleVerify()}
+                                />
+                                <button className="verify-btn" onClick={handleVerify}>
+                                    <Search size={20} />
+                                </button>
+                            </div>
+                        </ScrollReveal>
+
+                        <ScrollReveal direction="up" distance={40} delay={0.4}>
                             <div className="hero-stats">
                                 <div className="stat-card">
                                     <span className="stat-value">{liveStats.products}</span>
-                                    <span className="stat-label">Assets Minted</span>
+                                    <span className="stat-label">Authentic Sarees</span>
                                 </div>
                                 <div className="stat-card">
                                     <span className="stat-value">{liveStats.transfers}</span>
-                                    <span className="stat-label">Transfers</span>
+                                    <span className="stat-label">Artisans Supported</span>
                                 </div>
                                 <div className="stat-card">
                                     <span className="stat-value">{liveStats.verifications}</span>
-                                    <span className="stat-label">Verified</span>
+                                    <span className="stat-label">Verified Purchases</span>
                                 </div>
                             </div>
                         </ScrollReveal>
@@ -123,8 +135,8 @@ const Welcome = () => {
                     <div className="container">
                         <ScrollReveal direction="up" distance={30}>
                             <div className="grid-header">
-                                <h2>The Protocol</h2>
-                                <p>Advanced features designed for modern industrial scale.</p>
+                                <h2>Blockchain-Powered Authenticity</h2>
+                                <p>Preserving Kasaragod's handloom tradition through modern technology.</p>
                             </div>
                         </ScrollReveal>
 
@@ -136,12 +148,11 @@ const Welcome = () => {
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
                                     transition={{ delay: i * 0.1 }}
+                                    className="feature-card glass"
                                 >
-                                    <Card3D className="feature-card glass">
-                                        <span className="feature-icon">{f.icon}</span>
-                                        <h3>{f.title}</h3>
-                                        <p>{f.desc}</p>
-                                    </Card3D>
+                                    <span className="feature-icon">{f.icon}</span>
+                                    <h3>{f.title}</h3>
+                                    <p>{f.desc}</p>
                                 </motion.div>
                             ))}
                         </div>
@@ -155,8 +166,8 @@ const Welcome = () => {
                             whileHover={{ scale: 1.02 }}
                             transition={{ type: "spring", stiffness: 300 }}
                         >
-                            <h2>Ready to secure your supply chain?</h2>
-                            <p>Join the network of trusted manufacturers, distributors, and retailers globally.</p>
+                            <h2>Ready to register your sarees?</h2>
+                            <p>Join Kasaragod's network of verified weavers, cooperatives, and authentic saree sellers.</p>
                             <Link to="/register" className="btn btn-primary">Create Account</Link>
                         </motion.div>
                     </ScrollReveal>

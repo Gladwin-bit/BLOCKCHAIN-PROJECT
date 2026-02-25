@@ -368,10 +368,10 @@ const VerifyProduct = () => {
             <header className="verify-header">
                 <div className="header-badge">
                     <ShieldCheck size={16} />
-                    <span>Customer Verification</span>
+                    <span>Trust Verification Protocol</span>
                 </div>
-                <h1>Verify & Claim Product</h1>
-                <p>Scan the manufacturer's QR code to verify authenticity and claim ownership</p>
+                <h1>Asset Identification</h1>
+                <p>Authenticate your luxury items via blockchain-backed provenance auditing.</p>
             </header>
 
             <div className="verify-content">
@@ -382,14 +382,14 @@ const VerifyProduct = () => {
                         onClick={() => setActiveTab("qr")}
                     >
                         <QrCode size={18} />
-                        Scan QR
+                        Identity Scan
                     </button>
                     <button
                         className={`tab-btn ${activeTab === "manual" ? "active" : ""}`}
                         onClick={() => setActiveTab("manual")}
                     >
                         <FileText size={18} />
-                        Manual Entry
+                        Manual Audit
                     </button>
                 </div>
 
@@ -398,20 +398,20 @@ const VerifyProduct = () => {
                         /* QR Upload Section */
                         <motion.div
                             key="qr-section"
-                            className="qr-upload-section glass"
+                            className="qr-upload-section glass-panel"
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
                         >
-                            <div className="upload-icon">
-                                <QrCode size={48} />
+                            <div className="upload-icon-wrapper">
+                                <QrCode size={40} />
                             </div>
-                            <h3>Upload QR Code</h3>
-                            <p>Upload the QR code image hidden inside your product packaging</p>
+                            <h3>Identity Card Scan</h3>
+                            <p>Upload the high-security QR code from your physical packaging.</p>
 
                             <label className="upload-button">
                                 <Upload size={20} />
-                                <span>Choose QR Code Image</span>
+                                <span>Scan Media Archive</span>
                                 <input
                                     type="file"
                                     accept="image/*"
@@ -422,9 +422,9 @@ const VerifyProduct = () => {
                             </label>
 
                             {loading && activeTab === "qr" && (
-                                <div className="loading-indicator">
+                                <div className="loading-state" style={{ marginTop: '2rem' }}>
                                     <div className="spinner"></div>
-                                    <p>Scanning QR code...</p>
+                                    <p>Decrypting Identity Matrix...</p>
                                 </div>
                             )}
                         </motion.div>
@@ -432,40 +432,45 @@ const VerifyProduct = () => {
                         /* Manual Entry Section */
                         <motion.div
                             key="manual-section"
-                            className="manual-entry-section glass"
+                            className="manual-entry-section glass-panel"
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
                         >
-                            <div className="upload-icon">
-                                <FileText size={48} />
+                            <div className="form-header">
+                                <h3>Manual Node Verification</h3>
+                                <p>Provide secure identifiers from your digital waybill.</p>
                             </div>
-                            <h3>Manual Verification</h3>
-                            <p>Enter the Product ID and Secret Key provided by the manufacturer</p>
 
                             <div className="manual-form">
                                 {/* Waybill QR Upload */}
                                 <div className="input-field-group">
-                                    <label> Upload Waybill QR Code</label>
+                                    <label> Digital Waybill Manifest</label>
                                     <div id="qr-reader-hidden" style={{ display: "none" }}></div>
-                                    <input type="file" accept="image/*" onChange={handleWaybillUpload} disabled={loading} />
+                                    <div className="file-input-wrapper">
+                                        <Upload size={24} style={{ marginBottom: '0.5rem', color: '#666' }} />
+                                        <p style={{ fontSize: '0.85rem', color: '#888' }}>
+                                            {waybillUploaded ? "✓ Waybill Staged" : "Drop Manifest or Click to Upload"}
+                                        </p>
+                                        <input type="file" accept="image/*" onChange={handleWaybillUpload} disabled={loading} />
+                                    </div>
                                 </div>
                                 <div className="input-field-group">
-                                    <label> Consumer Scratch-Off Code</label>
+                                    <label> Scratch-Off Verification Node</label>
                                     <input
                                         type="text"
-                                        placeholder="Enter Secret Key"
+                                        placeholder="EX: 43D2-X90A-..."
                                         value={secretCode}
                                         onChange={(e) => setSecretCode(e.target.value)}
                                         disabled={loading}
                                     />
                                 </div>
                                 <button
-                                    className="btn btn-primary"
+                                    className="btn btn-primary btn-large"
                                     onClick={handleManualVerify}
                                     disabled={loading || !productId || !secretCode}
                                 >
-                                    {loading ? "Verifying..." : "Verify Asset"}
+                                    {loading ? "Decrypting..." : "Execute Verification"}
                                 </button>
                             </div>
                         </motion.div>
@@ -476,16 +481,18 @@ const VerifyProduct = () => {
                 <AnimatePresence mode="wait">
                     {status.msg && (
                         <motion.div
-                            className={`status-card glass ${status.type}`}
+                            className={`status-card ${status.type}`}
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -20 }}
                         >
-                            <div className="status-header">
+                            <div className="status-icon-wrapper">
                                 {status.icon}
-                                <h3>{status.title}</h3>
                             </div>
-                            <p>{status.msg}</p>
+                            <div className="status-info">
+                                <h3>{status.title}</h3>
+                                <p>{status.msg}</p>
+                            </div>
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -493,47 +500,56 @@ const VerifyProduct = () => {
                 {/* Product Info & Claim Section */}
                 {product && (
                     <motion.div
-                        className="product-section glass"
+                        className="product-section glass-panel"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                     >
-                        <div className="product-header">
-                            <Package size={32} />
-                            <div>
+                        <div className="product-hero">
+                            <div className="product-icon-box">
+                                <Package size={40} />
+                            </div>
+                            <div className="product-title-group">
                                 <h2>{product.name}</h2>
-                                <span className="product-id">ID: #{productId}</span>
+                                <span className="id-badge">ASSET NODE #{productId}</span>
                             </div>
                         </div>
 
                         {product.customerClaim && product.customerClaim.isClaimed ? (
                             /* Already Claimed - Show Owner Info */
                             <div className="claimed-info">
-                                <h3>
-                                    <CheckCircle2 size={20} />
-                                    Ownership Information
-                                </h3>
+                                <div className="form-title-row">
+                                    <h3>Ownership Audit</h3>
+                                </div>
                                 <div className="info-grid">
                                     <div className="info-item">
-                                        <User size={16} />
+                                        <div className="info-icon">
+                                            <User size={20} style={{ color: '#666' }} />
+                                        </div>
                                         <div>
-                                            <label>Owner Name</label>
+                                            <label>Registered Custodian</label>
                                             <p>{product.customerClaim.customerName}</p>
                                         </div>
                                     </div>
                                     <div className="info-item">
-                                        <MapPin size={16} />
+                                        <div className="info-icon">
+                                            <MapPin size={20} style={{ color: '#d4af37' }} />
+                                        </div>
                                         <div>
-                                            <label>Location</label>
+                                            <label>Geo-Spatial Tag</label>
                                             <p className="coords">{formatLocation(product.customerClaim.location).coords}</p>
                                             {formatLocation(product.customerClaim.location).address && (
-                                                <p className="address-details">{formatLocation(product.customerClaim.location).address}</p>
+                                                <p className="address-details" style={{ fontSize: '0.8rem', color: '#888', fontStyle: 'italic' }}>
+                                                    {formatLocation(product.customerClaim.location).address}
+                                                </p>
                                             )}
                                         </div>
                                     </div>
                                     <div className="info-item">
-                                        <Clock size={16} />
+                                        <div className="info-icon">
+                                            <Clock size={20} style={{ color: '#666' }} />
+                                        </div>
                                         <div>
-                                            <label>Claimed At</label>
+                                            <label>Registration Epoch</label>
                                             <p>{formatTimestamp(product.customerClaim.timestamp)}</p>
                                         </div>
                                     </div>
@@ -542,38 +558,40 @@ const VerifyProduct = () => {
                         ) : (
                             /* Not Claimed - Show Claim Form */
                             <div className="claim-form">
-                                <h3>Claim Ownership</h3>
-                                <p className="form-description">
-                                    Enter your name to claim ownership. Your location will be automatically recorded.
+                                <div className="form-title-row">
+                                    <h3>Custodian Registration</h3>
+                                </div>
+                                <p className="form-description" style={{ color: '#666', marginBottom: '2rem' }}>
+                                    Establish final point-of-consumption ownership on the immutable ledger.
                                 </p>
 
                                 {!account ? (
                                     <div className="wallet-notice">
-                                        <AlertTriangle size={16} />
-                                        <span>Please connect your wallet to claim ownership</span>
-                                        <button className="btn btn-primary" onClick={connectWallet}>
-                                            Connect Wallet
+                                        <AlertTriangle size={24} color="#d4af37" />
+                                        <div style={{ flex: 1 }}>
+                                            <p style={{ fontWeight: '600', color: '#1a1a1a' }}>Web3 Auth Required</p>
+                                            <p style={{ fontSize: '0.85rem', color: '#666' }}>Connect your secure wallet to claim this asset.</p>
+                                        </div>
+                                        <button className="btn btn-primary" onClick={connectWallet} style={{ padding: '0.8rem 1.5rem', borderRadius: '12px' }}>
+                                            INITIATE AUTH
                                         </button>
                                     </div>
                                 ) : (
-                                    <>
+                                    <div className="manual-form">
                                         <div className="input-field-group">
-                                            <label>
-                                                <User size={14} />
-                                                Your Name
-                                            </label>
+                                            <label> Legal Name of Custodian</label>
                                             <input
                                                 type="text"
-                                                placeholder="Enter your full name"
+                                                placeholder="Enter full legal name"
                                                 value={customerName}
                                                 onChange={(e) => setCustomerName(e.target.value)}
                                                 disabled={loading}
                                             />
                                         </div>
 
-                                        <div className="location-notice">
+                                        <div className="location-pill">
                                             <MapPin size={14} />
-                                            <span>Location will be automatically fetched when you claim</span>
+                                            <span>Geo-tagging active (Automatic Fetch)</span>
                                         </div>
 
                                         <button
@@ -584,16 +602,16 @@ const VerifyProduct = () => {
                                             {loading ? (
                                                 <>
                                                     <div className="spinner-small"></div>
-                                                    <span>Processing...</span>
+                                                    <span>Securing Registry...</span>
                                                 </>
                                             ) : (
                                                 <>
-                                                    <CheckCircle2 size={20} />
-                                                    <span>Claim Ownership</span>
+                                                    <ShieldCheck size={20} />
+                                                    <span>Claim Custody</span>
                                                 </>
                                             )}
                                         </button>
-                                    </>
+                                    </div>
                                 )}
                             </div>
                         )}
@@ -601,11 +619,11 @@ const VerifyProduct = () => {
                         {/* View Certificates Button */}
                         {product.history && product.history.length > 0 && (
                             <button
-                                className="btn btn-secondary btn-certificates"
+                                className="btn-certificates"
                                 onClick={() => setShowCertificates(true)}
                             >
                                 <FileText size={18} />
-                                View Certificates
+                                AUDIT PROVENANCE CERTIFICATES
                             </button>
                         )}
                     </motion.div>

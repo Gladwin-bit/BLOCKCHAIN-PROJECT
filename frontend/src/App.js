@@ -35,8 +35,8 @@ function Navbar() {
         <nav className="navbar">
             <div className="nav-brand">
                 <Link to={isAuthenticated ? "/" : "/welcome"}>
-                    <span className="logo-icon">⛓️</span>
-                    <span className="logo-text">SupplyChain</span>
+                    <span className="logo-icon">🥻</span>
+                    <span className="logo-text">Kasaragod Sarees</span>
                 </Link>
             </div>
 
@@ -89,9 +89,9 @@ function Navbar() {
             )}
 
             {!isAuthenticated && (
-                <div className="nav-links">
-                    <Link to="/login" className="btn btn-secondary">Sign In</Link>
-                    <Link to="/register" className="btn btn-primary">Get Started</Link>
+                <div className="auth-buttons">
+                    <Link to="/login" className="nav-link-btn">Sign In</Link>
+                    <Link to="/register" className="btn btn-primary btn-nav-primary">Get Started</Link>
                 </div>
             )}
         </nav>
@@ -109,8 +109,8 @@ function AnimatedRoutes() {
                     className="loading-logo"
                     animate={{ rotate: 360 }}
                     transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                >⛓️</motion.div>
-                <p>Establishing secure connection...</p>
+                >🥻</motion.div>
+                <p>Weaving your experience...</p>
             </div>
         }>
             <AnimatePresence mode="wait">
@@ -179,10 +179,10 @@ function AnimatedRoutes() {
 function PageWrapper({ children }) {
     return (
         <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
             className="page-wrapper"
         >
             {children}

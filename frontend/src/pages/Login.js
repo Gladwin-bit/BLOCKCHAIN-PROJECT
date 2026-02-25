@@ -70,12 +70,7 @@ const Login = () => {
     };
 
     return (
-        <div
-            className="login-page"
-            style={{
-                '--bg-image': `url(${process.env.PUBLIC_URL}/supply-chain-bg.png)`
-            }}
-        >
+        <div className="login-page">
             <div className="login-container">
                 <motion.div
                     className="login-card glass"
@@ -85,10 +80,10 @@ const Login = () => {
                 >
                     <div className="login-header">
                         <div className="logo-section">
-                            <span className="logo-icon">⛓️</span>
-                            <h1>Welcome Back</h1>
+                            <span className="logo-icon">🧵</span>
+                            <h1>Kasaragod Sarees</h1>
                         </div>
-                        <p>Sign in to access your supply chain dashboard</p>
+                        <p>Sign in to access your saree verification portal</p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="login-form">

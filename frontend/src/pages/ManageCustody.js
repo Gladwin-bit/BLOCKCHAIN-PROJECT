@@ -7,14 +7,17 @@ import { toast } from "react-toastify";
 import { QRCodeSVG } from "qrcode.react";
 import { Html5Qrcode } from "html5-qrcode";
 import WaybillCertificate from "../components/WaybillCertificate";
+import { Truck, Upload, Search, Download, ShieldCheck, MapPin, Camera } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import "./ManageCustody.css";
 
 import { ConnectButton } from "../components/ConnectButton";
 
 const ManageCustody = () => {
     const { account, connectWallet, transferCustody, getProductData, hasRole } = useSupplyChain();
+    const [searchParams] = useSearchParams();
 
-    const [productId, setProductId] = useState("");
+    const [productId, setProductId] = useState(searchParams.get('id') || "");
     const [status, setStatus] = useState("");
     const [loading, setLoading] = useState(false);
     const [productDetail, setProductDetail] = useState(null);
@@ -24,6 +27,20 @@ const ManageCustody = () => {
     const [nextKey, setNextKey] = useState(""); // Key for next recipient (auto-generated)
     const [location, setLocation] = useState(""); // Current location
     const [isVerified, setIsVerified] = useState(false); // N-1 Integrity Status
+    const [recipientEmail, setRecipientEmail] = useState(""); // Email of next recipient
+    const [emailSending, setEmailSending] = useState(false); // Email sending state
+
+    // Auto-load product from URL query param (?id=X)
+    React.useEffect(() => {
+        const idFromUrl = searchParams.get('id');
+        if (idFromUrl && account) {
+            setProductId(idFromUrl);
+            // checkProduct is defined below; use a small timeout to let state settle
+            setTimeout(() => {
+                document.getElementById('custody-search-btn')?.click();
+            }, 300);
+        }
+    }, [account]); // run once wallet is connected
 
     // QR Waybill States
     const [scannedWaybill, setScannedWaybill] = useState(null); // Parsed QR data
@@ -121,6 +138,43 @@ const ManageCustody = () => {
             setNextKey(randomKey);
         }
     }, []);
+
+    // Send handover key via email to recipient
+    const sendHandoverKeyViaEmail = async () => {
+        if (!recipientEmail) {
+            toast.warn("⚠️ Please enter the recipient's email address");
+            return;
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(recipientEmail)) {
+            toast.error("❌ Invalid email address");
+            return;
+        }
+        setEmailSending(true);
+        try {
+            const response = await fetch('http://localhost:5000/api/email/send-handover-key', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    recipientEmail,
+                    productId: productDetail.id,
+                    productName: productDetail.name,
+                    handoverKey: nextKey
+                })
+            });
+            const data = await response.json();
+            if (data.success) {
+                toast.success(`✅ Handover key sent to ${recipientEmail}`);
+            } else {
+                toast.error(`❌ Failed to send email: ${data.message}`);
+            }
+        } catch (error) {
+            console.error('Email send error:', error);
+            toast.error('❌ Failed to send email. Check your network connection.');
+        } finally {
+            setEmailSending(false);
+        }
+    };
 
     // TRANSFER CUSTODY (B2B Handover)
     const handleTransferCustody = async () => {
@@ -234,7 +288,8 @@ const ManageCustody = () => {
                     }
 
                     setScannedWaybill(waybillData);
-
+                    // Auto-fill incomingKey from QR to prevent manual typing errors
+                    setIncomingKey(waybillData.handoverKey);
                     // Fetch product data and validate sender
                     const productData = await getProductData(waybillData.productId);
                     const senderMatches = productData.currentOwner.toLowerCase() === waybillData.senderAddress.toLowerCase();
@@ -242,11 +297,10 @@ const ManageCustody = () => {
                     setWaybillValid(senderMatches);
                     setProductId(waybillData.productId);
                     setProductDetail(productData);
-                    // DO NOT auto-fill incomingKey - user must enter manually
 
                     if (senderMatches) {
-                        toast.success("✅ Waybill verified! Enter the handover key to continue.");
-                        setStatus("🛡️ Product Loaded - Enter Handover Key");
+                        toast.success("✅ Waybill verified! Handover key auto-filled. Enter location and transfer.");
+                        setStatus("🛡️ Product Loaded - Key Auto-Filled. Enter Location & Transfer.");
                     } else {
                         toast.warn("⚠️ Warning: Sender address does not match current owner!");
                         setStatus("⚠️ Sender Mismatch - Verify before accepting");
@@ -277,241 +331,258 @@ const ManageCustody = () => {
     };
 
     return (
-        <div className="manage-custody container glass">
+        <div className="manage-custody">
             <header className="page-header">
-                <h2>🚚 Rolling Supply Chain</h2>
+                <h2><Truck className="header-icon" size={48} /> Rolling Supply Chain</h2>
                 <p className="subtitle">Dynamic QR Handover Protocol</p>
             </header>
 
             {!account ? (
                 <div className="connect-prompt">
-                    <ConnectButton onClick={connectWallet} />
+                    <ConnectButton onClick={connectWallet} className="btn-connect pulse" />
                 </div>
             ) : (
                 <div className="custody-grid">
-                    {/* QR UPLOAD - Primary Entry Point */}
-                    {!productDetail ? (
-                        <div className="card search-card">
-                            <div className="card-header">
-                                <h3>📥 Upload Waybill to Begin</h3>
-                            </div>
-                            <p className="help-text" style={{ marginBottom: '20px' }}>
-                                Upload the QR waybill received from the sender to view product details and transfer custody.
-                            </p>
-
-                            <div className="qr-upload-zone glass">
-                                <label className="dropzone">
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleQRWaybillUpload}
-                                        style={{ display: 'none' }}
-                                        disabled={loading}
-                                    />
-                                    <div className="dropzone-content">
-                                        <div className="upload-icon">📷</div>
-                                        <p>{loading ? "Processing QR code..." : "Click to upload waybill QR"}</p>
-                                        <small>Supports PNG, JPG, JPEG</small>
-                                    </div>
-                                </label>
-                                {/* Hidden div for QR reader */}
-                                <div id="qr-reader-hidden" style={{ display: 'none' }}></div>
-                            </div>
-
-                            {/* Manual lookup for owners */}
-                            <div style={{ marginTop: '20px', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '15px' }}>
-                                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', marginBottom: '10px' }}>
-                                    Product owner? Look up manually
+                    <div className="glass-panel">
+                        {/* SEARCH & UPLOAD VIEW */}
+                        {!productDetail ? (
+                            <div className="search-card-content details-card-inner">
+                                <h3><Upload size={24} color="#D4AF37" /> Upload Waybill to Begin</h3>
+                                <p className="help-text">
+                                    Upload the digital waybill provided by the current custodian to verify asset integrity and start the handover process.
                                 </p>
-                                <div className="input-group search-group">
-                                    <input
-                                        type="number"
-                                        className="input-field"
-                                        placeholder="Enter Product ID..."
-                                        value={productId}
-                                        onChange={(e) => setProductId(e.target.value)}
-                                        style={{ fontSize: '0.9rem' }}
-                                    />
-                                    <button className="btn-icon" onClick={() => checkProduct(true)}>➜</button>
-                                </div>
-                            </div>
-                        </div>
-                    ) : (
-                        /* PRODUCT DETAILS AFTER QR SCAN */
-                        <div className="details-card fade-in">
-                            <div className="header-row">
-                                <span className="asset-id">#{productDetail.id}</span>
-                                <span className="status-badge" data-status={productDetail.stateRaw}>
-                                    {productDetail.state}
-                                </span>
-                            </div>
 
-                            <div className="info-row">
-                                <div className="info-item">
-                                    <label>Current Custodian</label>
-                                    <span className="address">
-                                        {productDetail.currentOwner === account ? "YOU (Active)" : productDetail.currentOwner.slice(0, 8) + "..."}
-                                    </span>
-                                </div>
-                                <div className="info-item">
-                                    <label>Asset Name</label>
-                                    <span>{productDetail.name}</span>
-                                </div>
-                            </div>
-
-                            {/* RECENT OWNERS & PLACES SUMMARY */}
-                            {productDetail.history && productDetail.history.length > 0 && (
-                                <div className="history-summary-card">
-                                    <h4>📍 Recent Journey</h4>
-                                    <div className="history-compact-list">
-                                        {productDetail.history.slice(-2).reverse().map((entry, idx) => (
-                                            <div key={idx} className="history-summary-item">
-                                                <span className="h-actor">{entry.actor.slice(0, 6)}...</span>
-                                                <span className="h-arrow">➜</span>
-                                                <span className="h-loc">
-                                                    {entry.location && entry.location.includes('|')
-                                                        ? entry.location.split('|')[1]
-                                                        : (entry.location || "Unknown")}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            <hr className="divider" />
-
-                            {/* OWNER VIEW: QR Waybill Generation */}
-                            {productDetail.currentOwner === account && (
-                                <div className="action-zone waybill-zone">
-                                    <h4>📦 Generate Waybill for Next Recipient</h4>
-                                    <p className="instruction">Download this QR waybill and send it to the next custodian</p>
-
-                                    <div className="waybill-qr-container glass">
-                                        <QRCodeSVG
-                                            id="waybill-qr"
-                                            value={JSON.stringify({
-                                                productId: productDetail.id,
-                                                handoverKey: nextKey,
-                                                senderAddress: account,
-                                                timestamp: Date.now()
-                                            })}
-                                            size={256}
-                                            level="H"
-                                            includeMargin={true}
-                                            style={{ display: 'block', margin: '0 auto' }}
-                                        />
-
-                                        <div className="waybill-info">
-                                            <div className="info-row">
-                                                <span>Product ID:</span>
-                                                <span>#{productDetail.id}</span>
-                                            </div>
-                                            <div className="info-row">
-                                                <span>Handover Key:</span>
-                                                <span className="key-display">{nextKey}</span>
-                                            </div>
-                                            <div className="info-row">
-                                                <span>Your Address:</span>
-                                                <span>{account.slice(0, 6)}...{account.slice(-4)}</span>
-                                            </div>
-                                        </div>
-
-                                        <button
-                                            className="btn btn-download"
-                                            onClick={downloadWaybill}
+                                <div className="qr-upload-zone">
+                                    <label className="dropzone">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleQRWaybillUpload}
+                                            style={{ display: 'none' }}
                                             disabled={loading}
-                                        >
-                                            💾 Download Waybill QR
+                                        />
+                                        <div className="dropzone-content">
+                                            <div className="upload-icon"><Camera size={56} /></div>
+                                            <p>{loading ? "Scanning Secure Protocol..." : "Drop Waybill QR Here"}</p>
+                                            <small>Authenticated PNG / JPG Assets Only</small>
+                                        </div>
+                                    </label>
+                                    <div id="qr-reader-hidden" style={{ display: 'none' }}></div>
+                                </div>
+
+                                <div className="lookup-section">
+                                    <span className="lookup-label">Authorized Lookup</span>
+                                    <div className="search-group">
+                                        <input
+                                            type="number"
+                                            className="input-modern"
+                                            placeholder="Asset ID Reference"
+                                            value={productId}
+                                            onChange={(e) => setProductId(e.target.value)}
+                                        />
+                                        <button id="custody-search-btn" className="btn-search" onClick={() => checkProduct(true)}>
+                                            <Search size={22} />
                                         </button>
                                     </div>
                                 </div>
-                            )}
+                            </div>
+                        ) : (
+                            /* PRODUCT DETAILS VIEW */
+                            <div className="details-card-inner">
+                                <header className="details-header">
+                                    <span className="id-badge">ASSET #{productDetail.id}</span>
+                                    <span className="status-pill">{productDetail.state}</span>
+                                </header>
 
-                            {/* RECEIVER VIEW: QR Upload & Certificate */}
-                            {productDetail.currentOwner !== account && (
-                                <div className="action-zone receiver-zone">
-                                    <h4>📥 Upload Waybill from Sender</h4>
-                                    <p className="instruction">Upload the QR waybill image received from the previous owner</p>
-
-                                    {!scannedWaybill ? (
-                                        <div className="qr-upload-zone glass">
-                                            <label className="dropzone">
-                                                <input
-                                                    type="file"
-                                                    accept="image/*"
-                                                    onChange={handleQRWaybillUpload}
-                                                    style={{ display: 'none' }}
-                                                    disabled={loading}
-                                                />
-                                                <div className="dropzone-content">
-                                                    <div className="upload-icon">📷</div>
-                                                    <p>{loading ? "Processing..." : "Click to upload waybill QR"}</p>
-                                                    <small>Supports PNG, JPG, JPEG</small>
+                                <div className="details-grid-layout">
+                                    {/* PANEL 1: Blockchain Data */}
+                                    <div className="details-box">
+                                        <div className="data-grid">
+                                            <div className="data-item">
+                                                <label>Current Custodian</label>
+                                                <div className="data-value address-value" style={{ fontSize: '1.25rem' }}>
+                                                    {productDetail.currentOwner === account ? "YOU (Active Custodian)" : productDetail.currentOwner.slice(0, 10) + "..." + productDetail.currentOwner.slice(-8)}
                                                 </div>
-                                            </label>
-                                            {/* Hidden div for QR reader */}
-                                            <div id="qr-reader-hidden" style={{ display: 'none' }}></div>
+                                            </div>
+                                            <div className="data-item">
+                                                <label>Asset Description</label>
+                                                <div className="data-value" style={{ fontSize: '1.25rem' }}>{productDetail.name}</div>
+                                            </div>
+                                            <div className="data-item">
+                                                <label>Loom Origin</label>
+                                                <div className="data-value" style={{ fontSize: '1.1rem' }}>{productDetail.loomLocation || "—"}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* PANEL 2: JOURNEY TRACKER */}
+                                    {productDetail.history && productDetail.history.length > 0 && (
+                                        <div className="details-box journey-section">
+                                            <h4><MapPin size={18} /> Verified Chain Custody</h4>
+                                            <div className="journey-list">
+                                                {productDetail.history.slice().reverse().map((entry, idx) => (
+                                                    <div key={idx} className="journey-item">
+                                                        <span className="j-actor">{entry.actor.slice(0, 8)}...</span>
+                                                        <span className="j-arrow">➔</span>
+                                                        <span className="j-loc">
+                                                            {entry.location && entry.location.includes('|')
+                                                                ? entry.location.split('|')[1]
+                                                                : (entry.location || "Initial Hub")}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* PANEL 3: ACTIONS (Sender or Receiver) */}
+                                    {productDetail.currentOwner === account ? (
+                                        <div className="details-box action-box">
+                                            <h4>Digital Waybill Terminal</h4>
+                                            <p className="instruction-text">Authorize the next handover by downloading this encoded waybill.</p>
+
+                                            <div className="digital-waybill">
+                                                <div className="qr-frame">
+                                                    {nextKey ? (
+                                                        <QRCodeSVG
+                                                            id="waybill-qr"
+                                                            value={JSON.stringify({
+                                                                productId: productDetail.id,
+                                                                handoverKey: nextKey,
+                                                                senderAddress: account,
+                                                                timestamp: Date.now()
+                                                            })}
+                                                            size={220}
+                                                            level="H"
+                                                            includeMargin={false}
+                                                        />
+                                                    ) : (
+                                                        <div style={{ width: 220, height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D4AF37', fontSize: '0.85rem', textAlign: 'center', border: '1px dashed rgba(212,175,55,0.3)', borderRadius: 8 }}>
+                                                            Generating key...
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="waybill-meta">
+                                                    <div className="meta-row">
+                                                        <span>Ref ID</span>
+                                                        <span>#{productDetail.id}</span>
+                                                    </div>
+                                                    <div className="meta-row">
+                                                        <span>Handover Key</span>
+                                                        <span className="key-highlight">{nextKey}</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Email recipient input */}
+                                                <div style={{ width: '100%', marginTop: '1rem' }}>
+                                                    <input
+                                                        type="email"
+                                                        className="input-modern"
+                                                        placeholder="Next Recipient's Email Address"
+                                                        value={recipientEmail}
+                                                        onChange={(e) => setRecipientEmail(e.target.value)}
+                                                        style={{ width: '100%', marginBottom: '0.75rem' }}
+                                                    />
+                                                    <button
+                                                        className="btn btn-secondary"
+                                                        onClick={sendHandoverKeyViaEmail}
+                                                        disabled={emailSending || !recipientEmail}
+                                                        style={{ width: '100%', height: '48px', marginBottom: '0.75rem', background: 'linear-gradient(135deg, #1a472a, #2d6a4f)', border: '1px solid #52b788', color: '#d8f3dc' }}
+                                                    >
+                                                        {emailSending ? '📧 Sending...' : '📧 Send Key via Email'}
+                                                    </button>
+                                                </div>
+
+                                                <button
+                                                    className="btn btn-primary btn-download-premium"
+                                                    onClick={downloadWaybill}
+                                                    disabled={loading}
+                                                >
+                                                    <Download size={20} /> Secure Download
+                                                </button>
+                                            </div>
                                         </div>
                                     ) : (
-                                        <div className="waybill-scanned">
-                                            <WaybillCertificate
-                                                waybill={scannedWaybill}
-                                                isVerified={waybillValid}
-                                                productData={productDetail}
-                                            />
+                                        <div className="details-box action-box">
+                                            <h4>Handover Verification</h4>
+                                            <p className="instruction-text">Complete the N-1 Node integrity check to accept custody.</p>
 
-                                            <div className="input-group">
-                                                <input
-                                                    type="text"
-                                                    className="input-field"
-                                                    placeholder="Enter Handover Key from Sender"
-                                                    value={incomingKey}
-                                                    onChange={(e) => setIncomingKey(e.target.value)}
-                                                />
-                                            </div>
+                                            {!scannedWaybill ? (
+                                                <div className="qr-upload-zone" style={{ borderStyle: 'solid', borderWidth: '1px', marginBottom: 0, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                                    <label className="dropzone">
+                                                        <input
+                                                            type="file"
+                                                            accept="image/*"
+                                                            onChange={handleQRWaybillUpload}
+                                                            style={{ display: 'none' }}
+                                                            disabled={loading}
+                                                        />
+                                                        <div className="dropzone-content" style={{ padding: '2rem 1rem' }}>
+                                                            <div className="upload-icon" style={{ marginBottom: '1rem' }}><Camera size={40} /></div>
+                                                            <p style={{ fontSize: '1rem' }}>Verify Waybill QR</p>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                            ) : (
+                                                <div className="verification-terminal">
+                                                    <WaybillCertificate
+                                                        waybill={scannedWaybill}
+                                                        isVerified={waybillValid}
+                                                        productData={productDetail}
+                                                    />
 
-                                            <div className="input-group">
-                                                <input
-                                                    type="text"
-                                                    className="input-field"
-                                                    placeholder="Enter your current location"
-                                                    value={location}
-                                                    onChange={(e) => setLocation(e.target.value)}
-                                                />
-                                            </div>
+                                                    <div className="custody-input-stack">
+                                                        <input
+                                                            type="text"
+                                                            className="input-modern"
+                                                            placeholder="Secret Handover Key"
+                                                            value={incomingKey}
+                                                            onChange={(e) => setIncomingKey(e.target.value)}
+                                                        />
+                                                        <input
+                                                            type="text"
+                                                            className="input-modern"
+                                                            placeholder="Dispatch / Target Location"
+                                                            value={location}
+                                                            onChange={(e) => setLocation(e.target.value)}
+                                                        />
+                                                    </div>
 
-                                            <div className="action-buttons">
-                                                <button
-                                                    className="btn btn-verify"
-                                                    onClick={handleTransferCustody}
-                                                    disabled={loading || !waybillValid || !location || !incomingKey}
-                                                >
-                                                    {loading ? "Transferring..." : "Accept Custody"}
-                                                </button>
-                                                <button
-                                                    className="btn btn-secondary"
-                                                    onClick={() => {
-                                                        setScannedWaybill(null);
-                                                        setWaybillValid(false);
-                                                        setUploadedFile(null);
-                                                        setProductDetail(null);
-                                                    }}
-                                                    disabled={loading}
-                                                >
-                                                    Upload Different QR
-                                                </button>
-                                            </div>
+                                                    <div className="btn-stack" style={{ display: 'flex', gap: '1rem' }}>
+                                                        <button
+                                                            className="btn btn-primary btn-accept"
+                                                            onClick={handleTransferCustody}
+                                                            disabled={loading || !waybillValid || !location || !incomingKey}
+                                                        >
+                                                            {loading ? "Authorizing..." : "Accept Custody"}
+                                                        </button>
+                                                        <button
+                                                            className="btn btn-secondary"
+                                                            style={{ height: '60px', padding: '0 2rem' }}
+                                                            onClick={() => {
+                                                                setScannedWaybill(null);
+                                                                setWaybillValid(false);
+                                                                setProductDetail(null);
+                                                            }}
+                                                        >
+                                                            Reset
+                                                        </button>
+                                                    </div>
 
-                                            {isVerified && (
-                                                <p className="verification-success">🛡️ History Cryptographically Verified (N-1 Nodes)</p>
+                                                    {isVerified && (
+                                                        <div className="verification-badge">
+                                                            <ShieldCheck size={20} /> Integrity Verified
+                                                        </div>
+                                                    )}
+                                                </div>
                                             )}
                                         </div>
                                     )}
                                 </div>
-                            )}
-                        </div>
-                    )}
+                            </div>
+                        )}
+                    </div>
 
                     {status && (
                         <div className={`status-toast ${status.includes('❌') ? 'error' : (status.includes('⚠️') ? 'warning' : 'success')} slide-up`}>
@@ -525,4 +596,3 @@ const ManageCustody = () => {
 };
 
 export default ManageCustody;
-

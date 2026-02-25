@@ -11,6 +11,11 @@ const productSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    description: {
+        type: String,
+        required: false
+    },
+    // Renamed/Aliased for Weaver
     manufacturer: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
@@ -20,6 +25,15 @@ const productSchema = new mongoose.Schema({
         type: String,
         required: true,
         lowercase: true
+    },
+    // New Saree Specific Fields
+    loomLocation: {
+        type: String,
+        required: true
+    },
+    weaveDate: {
+        type: Date,
+        required: true
     },
     consumerSecretHash: {
         type: String,
@@ -38,6 +52,10 @@ const productSchema = new mongoose.Schema({
             type: Date,
             default: Date.now
         }
+    },
+    materialsMetadataFilename: {
+        type: String,
+        default: null
     },
     blockchainTxHash: {
         type: String

@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useSupplyChain } from "../hooks/useSupplyChain";
 import { motion } from "framer-motion";
-import ProductTimeline from "../components/ProductTimeline";
-import LoadingSpinner from "../components/LoadingSpinner";
+import { ProductTimeline } from "../components/ProductTimeline";
+import { LoadingSpinner } from "../components/LoadingSpinner";
 import "./VerifyProduct.css"; // Reuse verification styles
 
 const ConsumerView = () => {

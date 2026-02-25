@@ -1,190 +1,153 @@
 /* src/pages/TraceProduct.css */
 .trace-product-page {
-    min-height: 80vh;
-    padding: 3rem;
+    min-height: calc(100vh - var(--nav-height));
+    padding: 4rem 2rem;
+    max-width: 1400px !important;
+    /* Expansion for horizontal map */
+    margin: 0 auto;
 }
 
 .trace-content {
-    max-width: 800px;
-    margin: 0 auto;
+    width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 3rem;
 }
 
-/* Header Row */
-.header-row {
+/* Search Section - Fixed Width in the Center */
+.trace-search-section {
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.search-card {
+    padding: 2.5rem;
+    background: var(--glass-bg);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 20px 50px var(--shadow-color);
+}
+
+/* Asset Summary Bar */
+.asset-summary-card {
+    background: white;
+    border-radius: var(--border-radius-md);
+    padding: 2.5rem;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.asset-info-left h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2.5rem;
     margin-bottom: 0.5rem;
+    color: var(--text-primary);
 }
 
-.asset-id {
+.asset-meta {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+}
+
+.meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.meta-item label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-tertiary);
+    font-weight: 700;
+}
+
+.meta-item span {
     font-family: 'JetBrains Mono', monospace;
-    color: var(--text-muted);
     font-size: 0.9rem;
-    letter-spacing: 1px;
+    color: var(--text-primary);
 }
 
-/* Owner Info */
-.owner-info {
-    font-size: 1.1rem;
+.asset-badge {
+    background: var(--accent-primary);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius-sm);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+}
+
+/* Map Header */
+.map-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
     margin-bottom: 1rem;
 }
 
-.owner-info .address {
-    color: var(--accent-gold);
-    font-family: 'JetBrains Mono', monospace;
-}
-
-/* Timeline Styles */
-.timeline {
-    position: relative;
-    padding-left: 2rem;
-    margin-top: 2rem;
-    border-left: 2px solid rgba(255, 255, 255, 0.1);
-}
-
-.timeline-item {
-    position: relative;
-    margin-bottom: 2.5rem;
-    animation: slideInRight 0.5s ease forwards;
-    opacity: 0;
-}
-
-.timeline-item:nth-child(1) {
-    animation-delay: 0.1s;
-}
-
-.timeline-item:nth-child(2) {
-    animation-delay: 0.2s;
-}
-
-.timeline-item:nth-child(3) {
-    animation-delay: 0.3s;
-}
-
-.timeline-item:nth-child(4) {
-    animation-delay: 0.4s;
-}
-
-.timeline-marker {
-    position: absolute;
-    left: -2.6rem;
-    top: 0.5rem;
-    width: 1.2rem;
-    height: 1.2rem;
-    background: var(--bg-card);
-    border: 2px solid var(--accent-gold);
-    border-radius: 50%;
-    box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
-    z-index: 2;
-}
-
-.timeline-content {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    padding: 1.5rem;
-    position: relative;
-    transition: all 0.2s;
-}
-
-.timeline-content:hover {
-    background: rgba(255, 255, 255, 0.06);
-    transform: translateX(5px);
-}
-
-.timeline-content .time {
-    position: absolute;
-    top: -1.5rem;
-    left: 0;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    font-family: 'JetBrains Mono', monospace;
-}
-
-.timeline-content h4 {
+.map-header h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.5rem;
     color: var(--text-primary);
-    margin-bottom: 0.5rem;
-    font-size: 1.1rem;
 }
 
-.timeline-content .actor {
-    color: var(--accent-info);
-    font-size: 0.9rem;
-    margin-bottom: 0.2rem;
+.live-indicator {
+    width: 8px;
+    height: 8px;
+    background: var(--accent-success);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--accent-success);
+    animation: blink 2s infinite;
 }
 
-.timeline-content .location {
-    color: var(--text-secondary);
-    font-style: italic;
-    font-size: 0.95rem;
-}
-
-/* Customer Node Styling */
-.customer-node {
-    margin-top: 3rem;
-    padding-top: 2rem;
-    border-top: 2px dashed rgba(251, 191, 36, 0.3);
-}
-
-.customer-marker {
-    background: linear-gradient(135deg, #fbbf24, #f59e0b) !important;
-    border-color: #fbbf24 !important;
-    box-shadow: 0 0 20px rgba(251, 191, 36, 0.6) !important;
-    animation: pulse 2s infinite;
-}
-
-.customer-content {
-    background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.05)) !important;
-    border: 2px solid rgba(251, 191, 36, 0.3) !important;
-}
-
-.customer-content h4 {
-    color: #fbbf24 !important;
-    font-size: 1.2rem !important;
-}
-
-.customer-name {
-    color: #fbbf24;
-    font-weight: 600;
-    font-size: 1rem;
-    margin: 0.5rem 0;
-}
-
-@keyframes pulse {
+@keyframes blink {
 
     0%,
     100% {
-        box-shadow: 0 0 20px rgba(251, 191, 36, 0.6);
+        opacity: 1;
     }
 
     50% {
-        box-shadow: 0 0 30px rgba(251, 191, 36, 0.9);
+        opacity: 0.4;
     }
 }
 
-@keyframes slideInRight {
+@keyframes slideUp {
     from {
         opacity: 0;
-        transform: translateX(20px);
+        transform: translateY(30px);
     }
 
     to {
         opacity: 1;
-        transform: translateX(0);
+        transform: translateY(0);
     }
 }
 
 /* Responsive */
-@media (max-width: 768px) {
-    .trace-product-container {
-        padding: 1.5rem;
+@media (max-width: 1024px) {
+    .asset-summary-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2rem;
     }
 
-    .search-input-wrapper {
+    .asset-info-left h2 {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .asset-meta {
         flex-direction: column;
+        gap: 1rem;
     }
 }

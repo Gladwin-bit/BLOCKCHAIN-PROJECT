@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blockchain Supply Chain - System Architecture</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        @page {
+            size: A3 landscape;
+            margin: 20mm;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2d3748;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #718096;
+            font-size: 1.2em;
+            margin-bottom: 40px;
+            font-weight: 300;
+        }
+        
+        .diagram-container {
+            background: #f7fafc;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            border: 2px solid #e2e8f0;
+        }
+        
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 40px;
+            padding: 30px;
+            background: #f7fafc;
+            border-radius: 15px;
+            border: 2px solid #e2e8f0;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .legend-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .legend-text {
+            font-size: 0.95em;
+            color: #2d3748;
+        }
+        
+        .legend-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .legend-desc {
+            font-size: 0.85em;
+            color: #718096;
+        }
+        
+        .tech-stack {
+            margin-top: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+        }
+        
+        .tech-stack h3 {
+            color: #2d3748;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .tech-item {
+            background: white;
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            color: #4a5568;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .tech-item strong {
+            color: #667eea;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .container {
+                box-shadow: none;
+                padding: 20px;
+            }
+            
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 Blockchain Supply Chain System</h1>
+        <p class="subtitle">Comprehensive System Architecture Diagram</p>
+        
+        <div class="diagram-container">
+            <div class="mermaid">
+graph TB
+    subgraph "Frontend Layer - React Application"
+        UI[/"👤 User Interface<br/>(React Components)"/]
+        
+        subgraph "Pages"
+            Welcome["🏠 Welcome Page"]
+            Login["🔐 Login/Register"]
+            Dashboard["📊 Dashboard"]
+            CreateProduct["📦 Create Product"]
+            TransferCustody["🚚 Transfer Custody"]
+            TraceProduct["🔍 Trace Product"]
+            ClaimOwnership["🎫 Claim Ownership"]
+            VerifyProduct["✅ Verify Product"]
+        end
+        
+        subgraph "Context & State Management"
+            AuthContext["🔑 Auth Context<br/>(JWT + User State)"]
+            Web3Context["⛓️ Web3 Context<br/>(MetaMask Integration)"]
+            ThemeContext["🎨 Theme Context"]
+        end
+        
+        subgraph "Utils & Services"
+            GeoLocation["📍 Geolocation Service<br/>(IP + Browser API)"]
+            FileUpload["📄 File Upload Handler"]
+            Web3Utils["🔧 Web3 Utilities"]
+        end
+    end
+    
+    subgraph "Backend Layer - Express.js API"
+        API[/"🌐 REST API Server<br/>(Express.js)"/]
+        
+        subgraph "Routes"
+            AuthRoutes["🔐 /api/auth<br/>(Register, Login, Logout)"]
+            ProductRoutes["📦 /api/products<br/>(CRUD Operations)"]
+            CertRoutes["📜 /api/certificates<br/>(Upload, Validate)"]
+            SigRoutes["✍️ /api/signatures<br/>(Digital Signature Validation)"]
+        end
+        
+        subgraph "Middleware"
+            AuthMiddleware["🛡️ Auth Middleware<br/>(JWT Verification)"]
+        end
+        
+        subgraph "Controllers"
+            AuthController["👥 Auth Controller"]
+            ProductController["📦 Product Controller"]
+        end
+        
+        subgraph "Services"
+            GeoService["🌍 Geolocation Service<br/>(IP-API Integration)"]
+            SigService["🔏 Signature Service<br/>(PDF Validation)"]
+        end
+        
+        subgraph "Models - MongoDB"
+            UserModel["👤 User Model<br/>(name, email, role, wallet)"]
+            ProductModel["📦 Product Model<br/>(metadata, location)"]
+        end
+    end
+    
+    subgraph "Blockchain Layer - Ethereum"
+        BC[/"⛓️ Smart Contract<br/>(Solidity)"/]
+        
+        subgraph "Contract: SupplyChain.sol"
+            RBAC["🔐 Role-Based Access Control<br/>(Manufacturer, Distributor, Retailer)"]
+            
+            subgraph "Core Functions"
+                CreateProd["📦 createProduct()<br/>(Dual-key security)"]
+                TransferCust["🔄 transferCustody()<br/>(Rolling handover keys)"]
+                ClaimOwner["🎫 claimOwnership()<br/>(Scratch-off code)"]
+                RecordVerif["✅ recordVerification()<br/>(Activity log)"]
+                TransferOwner["💱 transferOwnership()<br/>(P2P resale)"]
+                RegisterCert["📜 registerUserCertificate()<br/>(IPFS hash storage)"]
+            end
+            
+            subgraph "Data Structures"
+                ProductStruct["📋 Product Struct<br/>(id, name, owner, state, hashes)"]
+                HistoryStruct["📜 History Entry<br/>(actor, state, timestamp, location)"]
+                VerifStruct["✅ Verification Log<br/>(verifier, time, location, remarks)"]
+                ClaimStruct["🎫 Customer Claim<br/>(name, location, timestamp)"]
+            end
+            
+            subgraph "State Machine"
+                Created["🏭 Created"]
+                InTransit["🚚 InTransit"]
+                AtRetailer["🏪 AtRetailer"]
+                Sold["✅ Sold"]
+                InTransitP2P["🔄 InTransit_P2P"]
+            end
+        end
+        
+        Events["📡 Events<br/>(ProductCreated, CustodyTransferred,<br/>OwnershipTransferred, ProductVerified)"]
+    end
+    
+    subgraph "External Services & Storage"
+        MongoDB[("🗄️ MongoDB<br/>(User & Product Metadata)")]
+        IPFS[("📁 IPFS<br/>(Certificate Storage)")]
+        MetaMask["🦊 MetaMask<br/>(Wallet Provider)"]
+        HardhatNode["⚙️ Hardhat Node<br/>(Local Blockchain)"]
+        IPAPIService["🌐 IP-API<br/>(Geolocation)"]
+    end
+    
+    subgraph "User Roles"
+        Manufacturer["🏭 Manufacturer<br/>(Create Products)"]
+        Distributor["🚚 Distributor<br/>(Transfer Custody)"]
+        Retailer["🏪 Retailer<br/>(Sell Products)"]
+        Customer["👤 Customer<br/>(Claim Ownership)"]
+        Intermediate["🔄 Intermediate Person<br/>(Logistics)"]
+    end
+    
+    %% Frontend to Backend Connections
+    UI --> AuthContext
+    UI --> Web3Context
+    UI --> ThemeContext
+    Welcome --> AuthRoutes
+    Login --> AuthRoutes
+    Dashboard --> ProductRoutes
+    CreateProduct --> ProductRoutes
+    TransferCustody --> ProductRoutes
+    TraceProduct --> ProductRoutes
+    ClaimOwnership --> ProductRoutes
+    VerifyProduct --> ProductRoutes
+    
+    AuthContext --> API
+    GeoLocation --> GeoService
+    FileUpload --> CertRoutes
+    
+    %% Backend Internal Connections
+    AuthRoutes --> AuthMiddleware
+    ProductRoutes --> AuthMiddleware
+    CertRoutes --> AuthMiddleware
+    SigRoutes --> AuthMiddleware
+    
+    AuthMiddleware --> AuthController
+    AuthMiddleware --> ProductController
+    
+    AuthController --> UserModel
+    ProductController --> ProductModel
+    
+    AuthRoutes --> UserModel
+    ProductRoutes --> ProductModel
+    CertRoutes --> SigService
+    SigRoutes --> SigService
+    
+    %% Backend to Database
+    UserModel --> MongoDB
+    ProductModel --> MongoDB
+    GeoService --> IPAPIService
+    
+    %% Frontend to Blockchain
+    Web3Context --> MetaMask
+    Web3Utils --> BC
+    
+    %% Backend to Blockchain (via Web3)
+    ProductController --> BC
+    
+    %% Blockchain Internal
+    CreateProd --> ProductStruct
+    TransferCust --> ProductStruct
+    ClaimOwner --> ProductStruct
+    RecordVerif --> VerifStruct
+    TransferOwner --> ProductStruct
+    RegisterCert --> IPFS
+    
+    ProductStruct --> HistoryStruct
+    ProductStruct --> ClaimStruct
+    
+    RBAC --> CreateProd
+    RBAC --> TransferCust
+    RBAC --> ClaimOwner
+    
+    CreateProd --> Created
+    TransferCust --> InTransit
+    TransferCust --> AtRetailer
+    ClaimOwner --> Sold
+    TransferOwner --> InTransitP2P
+    
+    CreateProd --> Events
+    TransferCust --> Events
+    ClaimOwner --> Events
+    RecordVerif --> Events
+    TransferOwner --> Events
+    
+    %% External Services
+    BC --> HardhatNode
+    SigService --> CertRoutes
+    
+    %% User Interactions
+    Manufacturer --> CreateProduct
+    Distributor --> TransferCustody
+    Retailer --> TransferCustody
+    Customer --> ClaimOwnership
+    Intermediate --> TransferCustody
+    
+    %% Styling
+    classDef frontend fill:#667eea,stroke:#5a67d8,stroke-width:3px,color:#fff
+    classDef backend fill:#48bb78,stroke:#38a169,stroke-width:3px,color:#fff
+    classDef blockchain fill:#ed8936,stroke:#dd6b20,stroke-width:3px,color:#fff
+    classDef database fill:#4299e1,stroke:#3182ce,stroke-width:3px,color:#fff
+    classDef external fill:#9f7aea,stroke:#805ad5,stroke-width:3px,color:#fff
+    classDef users fill:#f56565,stroke:#e53e3e,stroke-width:3px,color:#fff
+    classDef state fill:#38b2ac,stroke:#319795,stroke-width:2px,color:#fff
+    
+    class UI,Welcome,Login,Dashboard,CreateProduct,TransferCustody,TraceProduct,ClaimOwnership,VerifyProduct,AuthContext,Web3Context,ThemeContext,GeoLocation,FileUpload,Web3Utils frontend
+    class API,AuthRoutes,ProductRoutes,CertRoutes,SigRoutes,AuthMiddleware,AuthController,ProductController,GeoService,SigService,UserModel,ProductModel backend
+    class BC,RBAC,CreateProd,TransferCust,ClaimOwner,RecordVerif,TransferOwner,RegisterCert,ProductStruct,HistoryStruct,VerifStruct,ClaimStruct,Events blockchain
+    class MongoDB,IPFS database
+    class MetaMask,HardhatNode,IPAPIService external
+    class Manufacturer,Distributor,Retailer,Customer,Intermediate users
+    class Created,InTransit,AtRetailer,Sold,InTransitP2P state
+            </div>
+        </div>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #667eea;"></div>
+                <div class="legend-text">
+                    <div class="legend-title">Frontend Layer</div>
+                    <div class="legend-desc">React components, pages, context, and utilities</div>
+                </div>
+            </div>
+            
+            <div class="legend-item">
+                <div class="legend-color" style="background: #48bb78;"></div>
+                <div class="legend-text">
+                    <div class="legend-title">Backend Layer</div>
+                    <div class="legend-desc">Express.js API, routes, controllers, and services</div>
+                </div>
+            </div>
+            
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ed8936;"></div>
+                <div class="legend-text">
+                    <div class="legend-title">Blockchain Layer</div>
+                    <div class="legend-desc">Solidity smart contracts and blockchain logic</div>
+                </div>
+            </div>
+            
+            <div class="legend-item">
+                <div class="legend-color" style="background: #4299e1;"></div>
+                <div class="legend-text">
+                    <div class="legend-title">Data Storage</div>
+                    <div class="legend-desc">MongoDB database and IPFS distributed storage</div>
+                </div>
+            </div>
+            
+            <div class="legend-item">
+                <div class="legend-color" style="background: #9f7aea;"></div>
+                <div class="legend-text">
+                    <div class="legend-title">External Services</div>
+                    <div class="legend-desc">MetaMask, Hardhat node, and third-party APIs</div>
+                </div>
+            </div>
+            
+            <div class="legend-item">
+                <div class="legend-color" style="background: #f56565;"></div>
+                <div class="legend-text">
+                    <div class="legend-title">User Roles</div>
+                    <div class="legend-desc">Different actors in the supply chain system</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tech-stack">
+            <h3>🛠️ Technology Stack</h3>
+            <div class="tech-grid">
+                <div class="tech-item">
+                    <strong>Frontend</strong>
+                    React.js, Web3.js, MetaMask Integration
+                </div>
+                <div class="tech-item">
+                    <strong>Backend</strong>
+                    Node.js, Express.js, JWT Authentication
+                </div>
+                <div class="tech-item">
+                    <strong>Database</strong>
+                    MongoDB (User & Product Metadata)
+                </div>
+                <div class="tech-item">
+                    <strong>Blockchain</strong>
+                    Ethereum, Solidity ^0.8.20, Hardhat
+                </div>
+                <div class="tech-item">
+                    <strong>Storage</strong>
+                    IPFS (Certificate Storage)
+                </div>
+                <div class="tech-item">
+                    <strong>Security</strong>
+                    RBAC, JWT, Digital Signatures, Dual-Key System
+                </div>
+                <div class="tech-item">
+                    <strong>External APIs</strong>
+                    IP-API (Geolocation), Browser Geolocation API
+                </div>
+                <div class="tech-item">
+                    <strong>Development</strong>
+                    Hardhat, OpenZeppelin, Bun/NPM
+                </div>
+            </div>
+        </div>
+        
+        <div class="no-print" style="margin-top: 30px; text-align: center; padding: 20px; background: #f7fafc; border-radius: 10px;">
+            <p style="color: #718096; margin-bottom: 15px;">
+                <strong>To save as PDF:</strong> Press <kbd>Ctrl+P</kbd> (Windows) or <kbd>Cmd+P</kbd> (Mac), 
+                then select "Save as PDF" as the destination.
+            </p>
+            <button onclick="window.print()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 30px; border-radius: 8px; font-size: 1em; cursor: pointer; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);">
+                🖨️ Print / Save as PDF
+            </button>
+        </button>
+        </div>
+    </div>
+    
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis',
+                padding: 20
+            },
+            themeVariables: {
+                fontSize: '14px',
+                fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif'
+            }
+        });
+    </script>
+</body>
+</html>

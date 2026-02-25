@@ -11,12 +11,13 @@ const abi = SupplyChainArtifact.abi;
 
 export const ROLES = {
     ADMIN: "0x0000000000000000000000000000000000000000000000000000000000000000",
-    MANUFACTURER: ethers.keccak256(ethers.toUtf8Bytes("MANUFACTURER")),
+    WEAVER: ethers.keccak256(ethers.toUtf8Bytes("WEAVER")),
+    COOPERATIVE: ethers.keccak256(ethers.toUtf8Bytes("COOPERATIVE")),
     DISTRIBUTOR: ethers.keccak256(ethers.toUtf8Bytes("DISTRIBUTOR")),
-    RETAILER: ethers.keccak256(ethers.toUtf8Bytes("RETAILER"))
+    SHOP: ethers.keccak256(ethers.toUtf8Bytes("SHOP"))
 };
 
-export const PRODUCT_STATES = ["Created", "In Transit", "At Retailer", "Sold", "In Transit P2P"];
+export const PRODUCT_STATES = ["Created", "Verified", "In Transit", "At Shop", "Sold", "In Transit P2P"];
 
 
 // Standard hook for accessing context directly
@@ -96,21 +97,24 @@ export const SupplyChainProvider = ({ children }) => {
         }
     }, [updateConnection]);
 
-    const createProduct = async (name, consumerSecret, handoverKey, productCertificate = "") => {
+    const createProduct = async (name, loomLocation, weaveDate, consumerSecretHash, handoverKeyHash, productCertificate = "") => {
         if (!contract) throw new Error("Wallet not connected");
-        const consumerHash = ethers.keccak256(ethers.toUtf8Bytes(consumerSecret));
-        const handoverHash = ethers.keccak256(ethers.toUtf8Bytes(handoverKey));
-        toast.info("Initiating Product on Ledger...");
-        const tx = await contract.createProduct(name, consumerHash, handoverHash, productCertificate);
-        const receipt = await tx.wait();
-        const event = receipt.logs
-            .map(log => { try { return contract.interface.parseLog(log); } catch (e) { return null; } })
-            .find(log => log && log.name === "ProductCreated");
-        if (!event) throw new Error("Event 'ProductCreated' not found");
-        const productId = event.args.id.toString();
-        toast.success(`Product #${productId} minted!`);
-        return productId;
+        toast.info("Registering Saree on Blockchain Ledgers...");
+
+        const args = [name, loomLocation, weaveDate, consumerSecretHash, handoverKeyHash, productCertificate];
+
+        // Get the product ID via staticCall (free simulation, no gas)
+        const productId = (await contract.createProduct.staticCall(...args)).toString();
+
+        // Now submit the real transaction
+        const tx = await contract.createProduct(...args);
+        await tx.wait();
+
+        toast.success(`Saree #${productId} Registered! 🥻`);
+        return { productId, txHash: tx.hash };
     };
+
+
 
     const getProductData = async (id) => {
         const targetContract = contract || readOnlyContract;
@@ -119,22 +123,23 @@ export const SupplyChainProvider = ({ children }) => {
         const p = await targetContract.getProduct(id);
         if (!p.exists) throw new Error("Item not found on ledger (ID does not exist)");
 
-        const [h, v, vl] = await Promise.all([
+        const [h, v] = await Promise.all([
             targetContract.getHistory(id),
-            targetContract.getVerificationHistory(id),
-            targetContract.verifyLog(id)
+            targetContract.getVerificationHistory(id)
         ]);
 
 
         return {
             id: p.id.toString(),
             name: p.name,
+            loomLocation: p.loomLocation,
+            weaveDate: new Date(Number(p.weaveDate) * 1000).toLocaleDateString(),
             currentOwner: p.currentOwner,
             state: PRODUCT_STATES[p.state],
             stateRaw: p.state,
-            consumerSecretHash: p.consumerSecretHash,  // Static scratch code hash
-            currentHandoverHash: p.currentHandoverHash,  // Rolling B2B key hash
-            isConsumed: p.isConsumed,  // Whether customer has claimed
+            consumerSecretHash: p.consumerSecretHash,
+            currentHandoverHash: p.currentHandoverHash,
+            isConsumed: p.isConsumed,
             customerClaim: (p.customerClaim && p.customerClaim.isClaimed) ? {
                 customerName: p.customerClaim.customerName,
                 location: p.customerClaim.location,
@@ -142,11 +147,7 @@ export const SupplyChainProvider = ({ children }) => {
                 claimedBy: p.customerClaim.claimedBy,
                 isClaimed: p.customerClaim.isClaimed
             } : null,
-            verifyLog: vl.time > 0 ? {
-                verifier: vl.verifier,
-                time: new Date(Number(vl.time) * 1000).toLocaleString(),
-                isFirstClaim: vl.isFirstClaim
-            } : null,
+            verifyLog: null,
             history: h.map(entry => ({
                 actor: entry.actor,
                 state: PRODUCT_STATES[entry.state],

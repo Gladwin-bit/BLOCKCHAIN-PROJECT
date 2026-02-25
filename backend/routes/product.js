@@ -71,6 +71,96 @@ router.post('/upload-certificate', upload.single('certificate'), (req, res) => {
 });
 
 /**
+ * @route   POST /api/products/upload-materials-metadata
+ * @desc    Upload materials metadata JSON (threads, dyes, fabric sources)
+ * @access  Private
+ */
+router.post('/upload-materials-metadata', (req, res) => {
+    try {
+        const { productName, materials } = req.body;
+
+        if (!materials) {
+            return res.status(400).json({
+                success: false,
+                message: 'Materials data is required'
+            });
+        }
+
+        // Create metadata directory if it doesn't exist
+        const uploadPath = process.env.UPLOAD_PATH || './uploads';
+        const metadataPath = path.join(uploadPath, 'materials-metadata');
+
+        if (!fs.existsSync(metadataPath)) {
+            fs.mkdirSync(metadataPath, { recursive: true });
+        }
+
+        // Create unique filename
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const filename = `materials-${uniqueSuffix}.json`;
+        const filepath = path.join(metadataPath, filename);
+
+        // Prepare metadata object
+        const metadata = {
+            productName: productName || 'Untitled',
+            uploadDate: new Date().toISOString(),
+            ...materials
+        };
+
+        // Write JSON file
+        fs.writeFileSync(filepath, JSON.stringify(metadata, null, 2), 'utf8');
+
+        res.json({
+            success: true,
+            filename: filename,
+            path: filepath,
+            message: 'Materials metadata uploaded successfully'
+        });
+    } catch (error) {
+        console.error('Materials metadata upload error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to upload materials metadata',
+            error: error.message
+        });
+    }
+});
+
+/**
+ * @route   GET /api/products/materials-metadata/:filename
+ * @desc    Retrieve materials metadata file
+ * @access  Public
+ */
+router.get('/materials-metadata/:filename', (req, res) => {
+    try {
+        const { filename } = req.params;
+        const uploadPath = process.env.UPLOAD_PATH || './uploads';
+        const filePath = path.join(uploadPath, 'materials-metadata', filename);
+
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({
+                success: false,
+                message: 'Materials metadata file not found'
+            });
+        }
+
+        const metadata = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+
+        res.json({
+            success: true,
+            metadata
+        });
+    } catch (error) {
+        console.error('Get materials metadata error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve materials metadata',
+            error: error.message
+        });
+    }
+});
+
+
+/**
  * @route   GET /api/products/certificate/:filename
  * @desc    Serve product certificate file
  * @access  Public
@@ -106,7 +196,7 @@ router.get('/certificate/:filename', (req, res) => {
  */
 router.post('/register', async (req, res) => {
     try {
-        const { productId, name, manufacturerAddress, consumerSecretHash, certificateFilename, certificatePath, txHash } = req.body;
+        const { productId, name, manufacturerAddress, consumerSecretHash, certificateFilename, certificatePath, txHash, loomLocation, weaveDate } = req.body;
 
         // Validate required fields
         if (!productId || !name || !manufacturerAddress || !certificateFilename) {
@@ -136,8 +226,11 @@ router.post('/register', async (req, res) => {
         const product = await Product.create({
             productId: parseInt(productId),
             name,
+            description: req.body.description || "",
             manufacturer: manufacturer._id,
             manufacturerAddress: manufacturerAddress.toLowerCase(),
+            loomLocation: loomLocation || "Not Specified",
+            weaveDate: weaveDate || new Date(),
             consumerSecretHash,
             currentHandoverKey: req.body.currentHandoverKey || null, // Save handover key for rolling mechanism
             productCertificate: {

@@ -1,157 +1,313 @@
 // src/pages/Home.js
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { motion, useScroll, useTransform } from "framer-motion";
-import { Canvas } from "@react-three/fiber";
+import React, { useState, useEffect, useCallback } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { useSupplyChain } from "../hooks/useSupplyChain";
-import SupplyChainNetwork from "../components/3D/SupplyChainNetwork";
+import { useAuth } from "../context/AuthContext";
+import { ConnectButton } from "../components/ConnectButton";
+import { useSupplyChainContext } from "../context/SupplyChainContext";
 import "./Home.css";
 
+const STATE_META = {
+    0: { label: "Created", cls: "s-created" },
+    1: { label: "In Transit", cls: "s-transit" },
+    2: { label: "Verified", cls: "s-verified" },
+    3: { label: "Claimed", cls: "s-claimed" },
+};
+
 const Home = () => {
-    const { contract, readOnlyContract } = useSupplyChain();
-    const [liveStats, setLiveStats] = useState({ products: 0, verifications: 0, transfers: 0 });
-    const { scrollY } = useScroll();
-    const y1 = useTransform(scrollY, [0, 500], [0, 200]);
-    const y2 = useTransform(scrollY, [0, 500], [0, -150]);
+    const { contract, readOnlyContract, account, connectWallet } = useSupplyChainContext();
+    const { getProductData } = useSupplyChain();
+    const { user } = useAuth();
+    const navigate = useNavigate();
 
-    useEffect(() => {
-        const fetchStats = async () => {
-            const targetContract = contract || readOnlyContract;
-            if (!targetContract) return;
-            try {
-                const productFilter = targetContract.filters.ProductCreated();
-                const productEvents = await targetContract.queryFilter(productFilter);
-                const verifyFilter = targetContract.filters.ProductVerified();
-                const verifyEvents = await targetContract.queryFilter(verifyFilter);
-                const transferFilter = targetContract.filters.CustodyTransferred();
-                const transferEvents = await targetContract.queryFilter(transferFilter);
-                setLiveStats({
-                    products: productEvents.length,
-                    verifications: verifyEvents.length,
-                    transfers: transferEvents.length
-                });
-            } catch (error) {
-                console.error("Error fetching stats:", error);
+    const [sarees, setSarees] = useState([]);
+    const [stats, setStats] = useState({ total: 0, inCustody: 0, transferred: 0 });
+    const [loading, setLoading] = useState(false);
+    const [fetchErr, setFetchErr] = useState("");
+    const [expanded, setExpanded] = useState(null);
+
+    const fetchMyProducts = useCallback(async () => {
+        const tc = contract || readOnlyContract;
+        if (!tc || !account) return;
+        setLoading(true); setFetchErr("");
+        try {
+            const events = await tc.queryFilter(tc.filters.ProductCreated());
+            const mine = events.filter(e =>
+                e.args?.weaver?.toLowerCase() === account.toLowerCase()
+            );
+            if (!mine.length) {
+                setSarees([]);
+                setStats({ total: 0, inCustody: 0, transferred: 0 });
+                return;
             }
-        };
-        fetchStats();
-    }, [contract, readOnlyContract]);
+            const enriched = await Promise.all(mine.map(async e => {
+                const id = Number(e.args.id);
+                try {
+                    const data = await getProductData(id);
+                    // Use blockchain data first, override with DB enrichment if available
+                    let loomLocation = data.loomLocation || "—";
+                    let weaveDate = data.weaveDate || "—";
+                    try {
+                        const r = await fetch(`http://localhost:5000/api/products/${id}`);
+                        const j = await r.json();
+                        if (j.success) {
+                            if (j.product.loomLocation) loomLocation = j.product.loomLocation;
+                            if (j.product.weaveDate) weaveDate = new Date(j.product.weaveDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+                        }
+                    } catch { /* non-critical */ }
+                    return { id, name: data.name, stateRaw: data.stateRaw, state: data.state, currentOwner: data.currentOwner, loomLocation, weaveDate };
+                } catch {
+                    return { id, name: `Saree #${id}`, stateRaw: 0, state: "Created", currentOwner: account, loomLocation: "—", weaveDate: "—" };
+                }
+            }));
+            enriched.sort((a, b) => b.id - a.id);
+            setSarees(enriched);
+            const inCus = enriched.filter(s => s.currentOwner?.toLowerCase() === account.toLowerCase()).length;
+            setStats({ total: enriched.length, inCustody: inCus, transferred: enriched.length - inCus });
+        } catch (err) {
+            console.error(err);
+            setFetchErr("Could not load sarees from blockchain. Ensure the contract is deployed and connected.");
+        } finally {
+            setLoading(false);
+        }
+    }, [contract, readOnlyContract, account, getProductData]);
 
-    const features = [
-        { title: "Immutable Registry", desc: "Every product starts its journey as a cryptographic entity on the blockchain.", icon: "💎", link: "/create" },
-        { title: "Trustless Handover", desc: "Dynamic secret keys ensure only the rightful owner can accept custody.", icon: "🔑", link: "/custody" },
-        { title: "Consumer Trust", desc: "Instant verification for end-users via scan-and-claim technology.", icon: "🛡️", link: "/verify" },
-        { title: "End-to-End Visibility", desc: "Trace every hop in the supply chain with timestamped precision.", icon: "🌍", link: "/trace" }
-    ];
+    useEffect(() => { fetchMyProducts(); }, [fetchMyProducts]);
+
+    const pending = sarees.filter(s => s.currentOwner?.toLowerCase() === account?.toLowerCase() && s.stateRaw === 0);
+    const firstName = user?.name ? user.name.split(" ")[0] : "Weaver";
+    const greeting = (() => { const h = new Date().getHours(); return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening"; })();
+
+    // ── table body content ──────────────────────────────────────────
+    const TableBody = () => {
+        if (!account) return (
+            <div className="tbl-state">
+                <span className="tbl-state-icon">🔌</span>
+                <p>Connect your MetaMask wallet to view your registered sarees.</p>
+                <ConnectButton onClick={connectWallet} />
+            </div>
+        );
+        if (loading) return (
+            <div className="tbl-state">
+                <motion.span animate={{ rotate: 360 }} transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }} style={{ display: "inline-block", fontSize: "2rem" }}>🥻</motion.span>
+                <p>Fetching from blockchain…</p>
+            </div>
+        );
+        if (fetchErr) return (
+            <div className="tbl-state tbl-state--error">
+                <span className="tbl-state-icon">⚠️</span>
+                <p>{fetchErr}</p>
+                <button className="btn btn-secondary" onClick={fetchMyProducts} style={{ marginTop: "0.5rem", fontSize: "0.85rem" }}>Try Again</button>
+            </div>
+        );
+        if (!sarees.length) return (
+            <div className="tbl-state">
+                <span className="tbl-state-icon">📭</span>
+                <p>No sarees registered yet. Start by registering your first saree.</p>
+                <Link to="/create" className="btn btn-primary" style={{ marginTop: "0.75rem" }}>+ Register First Saree</Link>
+            </div>
+        );
+        return (
+            <div className="tbl-wrap">
+                <table className="saree-tbl">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Saree Name</th>
+                            <th>Loom Location</th>
+                            <th>Weave Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {sarees.map(s => {
+                            const sm = STATE_META[s.stateRaw] || STATE_META[0];
+                            const isMine = s.currentOwner?.toLowerCase() === account?.toLowerCase();
+                            const isOpen = expanded === s.id;
+                            return (
+                                <React.Fragment key={s.id}>
+                                    <tr className={`tbl-row ${isOpen ? "tbl-row--open" : ""}`}
+                                        onClick={() => setExpanded(isOpen ? null : s.id)}>
+                                        <td><span className="id-tag">#{s.id}</span></td>
+                                        <td className="td-bold">{s.name}</td>
+                                        <td className="td-muted">{s.loomLocation}</td>
+                                        <td className="td-muted">{s.weaveDate}</td>
+                                        <td>
+                                            <span className={`state-chip ${sm.cls}`}>{sm.label}</span>
+                                            {isMine && <span className="you-chip">● You</span>}
+                                        </td>
+                                        <td onClick={e => e.stopPropagation()}>
+                                            <div className="row-acts">
+                                                {isMine && s.stateRaw === 0 && (
+                                                    <Link to="/custody" className="ra-btn ra-primary" title="Generate Waybill">📤 Waybill</Link>
+                                                )}
+                                                <Link to="/trace" className="ra-btn ra-ghost" title="Trace">🔍 Trace</Link>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {isOpen && (
+                                        <tr className="expand-tr">
+                                            <td colSpan={6}>
+                                                <div className="expand-row">
+                                                    <div className="er-item"><span className="er-lbl">Custodian</span><span className="er-val mono">{isMine ? "You (Active)" : `${s.currentOwner?.slice(0, 10)}…${s.currentOwner?.slice(-8)}`}</span></div>
+                                                    <div className="er-item"><span className="er-lbl">Chain State</span><span className="er-val">{s.state}</span></div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </React.Fragment>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
+        );
+    };
 
     return (
-        <div
-            className="home-page"
-            style={{
-                '--bg-image': `url(${process.env.PUBLIC_URL}/supply-chain-bg.png)`
-            }}
-        >
-            <section className="hero">
-                <motion.div
-                    className="hero-floating-elements"
-                    style={{ y: y1 }}
-                >
-                    <div className="blob blob-1"></div>
-                    <div className="blob blob-2"></div>
-                </motion.div>
+        <div className="dash">
 
+            {/* ─── HERO BAND ─────────────────────────────────────── */}
+            <div className="hero-band">
                 <div className="hero-content">
-                    {/* 3D Background Visualization */}
-                    <div className="hero-3d-container">
-                        <Canvas camera={{ position: [0, 0, 3], fov: 50 }}>
-                            <ambientLight intensity={0.5} />
-                            <pointLight position={[10, 10, 10]} intensity={0.8} />
-                            <pointLight position={[-10, -10, -10]} intensity={0.3} />
-                            <SupplyChainNetwork />
-                        </Canvas>
+                    <div className="hero-left">
+                        <span className="hero-eyebrow">{greeting}</span>
+                        <h1 className="hero-name">{firstName}</h1>
+                        <p className="hero-sub">Kasaragod Handloom · Manufacturer Portal</p>
                     </div>
-
-                    {/* Hero Text Box */}
-                    <div className="hero-text-box">
-                        <motion.div
-                            initial={{ opacity: 0, y: 30 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8, ease: "easeOut" }}
-                        >
-                            <span className="hero-tag">Enterprise Blockchain Solution</span>
-                            <h1>Secure the<br /><span className="text-glow">Supply Chain</span></h1>
-                            <p>Eliminate counterfeits and establish absolute trust with our decentralized asset management protocol.</p>
-
-                            <motion.div
-                                className="hero-actions"
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.5, duration: 0.8 }}
-                            >
-                                <Link to="/trace" className="btn btn-primary">
-                                    <span>Get Started</span>
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                                </Link>
-                                <Link to="/verify" className="btn btn-secondary">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-                                    <span>Verify Asset</span>
-                                </Link>
-                            </motion.div>
-                        </motion.div>
+                    <div className="hero-right">
+                        {account ? (
+                            <div className="wallet-chip">
+                                <span className="wdot" />
+                                <div>
+                                    <span className="wlbl">MetaMask Connected</span>
+                                    <span className="waddr">{account.slice(0, 8)}…{account.slice(-6)}</span>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="wallet-prompt">
+                                <p>Connect wallet to load your data</p>
+                                <ConnectButton onClick={connectWallet} />
+                            </div>
+                        )}
                     </div>
-
-                    <motion.div
-                        className="hero-stats"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.5, duration: 1 }}
-                    >
-                        <div className="stat-card">
-                            <span className="stat-value">{liveStats.products}</span>
-                            <span className="stat-label">Assets Minted</span>
-                        </div>
-                        <div className="stat-card">
-                            <span className="stat-value">{liveStats.transfers}</span>
-                            <span className="stat-label">Transfers</span>
-                        </div>
-                        <div className="stat-card">
-                            <span className="stat-value">{liveStats.verifications}</span>
-                            <span className="stat-label">Verified</span>
-                        </div>
-                    </motion.div>
                 </div>
-            </section>
+            </div>
 
-            <section className="features-grid-section">
-                <div className="container">
-                    <div className="grid-header">
-                        <h2>The Protocol</h2>
-                        <p>Advanced features designed for modern industrial scale.</p>
-                    </div>
+            <div className="dash-body">
 
-                    <div className="features-grid">
-                        {features.map((f, i) => (
-                            <motion.div
-                                key={i}
-                                className="feature-card glass"
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: i * 0.1 }}
-                                whileHover={{ y: -10 }}
-                            >
-                                <span className="feature-icon">{f.icon}</span>
-                                <h3>{f.title}</h3>
-                                <p>{f.desc}</p>
-                                <Link to={f.link} className="feature-link">Explore →</Link>
+                {/* ─── PENDING ALERT ─────────────────────────────── */}
+                <AnimatePresence>
+                    {pending.length > 0 && (
+                        <motion.div className="pending-bar"
+                            initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                            <span>📬</span>
+                            <div>
+                                <strong>{pending.length} saree{pending.length > 1 ? "s" : ""} pending dispatch</strong>
+                                <p>Still in your custody — generate a waybill to proceed.</p>
+                            </div>
+                            <button className="btn btn-primary" style={{ marginLeft: "auto", whiteSpace: "nowrap" }}
+                                onClick={() => navigate("/custody")}>Dispatch Now →</button>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* ─── KPI CARDS ─────────────────────────────────── */}
+                <div className="kpi-row">
+                    {[
+                        { label: "Total Registered", value: stats.total, icon: "🥻", accent: "#6B0F1A" },
+                        { label: "In My Custody", value: stats.inCustody, icon: "📦", accent: "#B5591A" },
+                        { label: "Transferred Out", value: stats.transferred, icon: "🚚", accent: "#1E7A50" },
+                    ].map((k, i) => (
+                        <motion.div key={k.label} className="kpi-card"
+                            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.07, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}>
+                            <div className="kpi-header">
+                                <span className="kpi-ico">{k.icon}</span>
+                                <span className="kpi-lbl">{k.label}</span>
+                            </div>
+                            <div className="kpi-num" style={{ color: k.accent }}>
+                                {loading ? "·" : k.value}
+                            </div>
+                            <div className="kpi-track">
+                                <div className="kpi-fill" style={{
+                                    width: stats.total
+                                        ? `${Math.round((k.value / stats.total) * 100)}%`
+                                        : "0%",
+                                    background: k.accent
+                                }} />
+                            </div>
+                        </motion.div>
+                    ))}
+                </div>
+
+                {/* ─── DIVIDER ────────────────────────────────────── */}
+                <div className="section-divider">
+                    <span className="sd-label">Workspace</span>
+                </div>
+
+                {/* ─── MAIN CONTENT GRID ─────────────────────────── */}
+                <div className="workspace-grid">
+
+                    {/* Action sidebar */}
+                    <aside className="actions-col">
+                        <p className="col-title">Quick Actions</p>
+                        {[
+                            {
+                                to: "/create", icon: "✨", title: "Register New Saree",
+                                desc: "Mint a saree on-chain with material details and consumer codes.",
+                                btnLabel: "+ Register", primary: true
+                            },
+                            {
+                                to: "/custody", icon: "📤", title: "Manage Handover",
+                                desc: "Transfer custody using the secure QR waybill protocol.",
+                                btnLabel: "Open Panel →", primary: false
+                            },
+                            {
+                                to: "/trace", icon: "🔍", title: "Trace a Saree",
+                                desc: "Follow any registered saree's full supply chain journey.",
+                                btnLabel: "Open Trace →", primary: false
+                            },
+                        ].map((a, i) => (
+                            <motion.div key={a.to} className={`action-card ${a.primary ? "action-card--primary" : ""}`}
+                                initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.15 + i * 0.08, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}>
+                                <span className="ac-icon">{a.icon}</span>
+                                <div className="ac-body">
+                                    <h3>{a.title}</h3>
+                                    <p>{a.desc}</p>
+                                </div>
+                                <Link to={a.to}
+                                    className={`ac-btn ${a.primary ? "btn btn-primary" : "btn btn-secondary"}`}>
+                                    {a.btnLabel}
+                                </Link>
                             </motion.div>
                         ))}
-                    </div>
+                    </aside>
+
+                    {/* Sarees table panel */}
+                    <motion.section className="sarees-panel"
+                        initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}>
+                        <div className="panel-hd">
+                            <div>
+                                <h2 className="panel-title">My Registered Sarees</h2>
+                                <p className="panel-sub">
+                                    {!loading && !fetchErr && `${sarees.length} record${sarees.length !== 1 ? "s" : ""} found`}
+                                </p>
+                            </div>
+                            <button className="refresh-btn" onClick={fetchMyProducts} disabled={loading}>
+                                ↻ {loading ? "Loading…" : "Refresh"}
+                            </button>
+                        </div>
+                        <TableBody />
+                    </motion.section>
+
                 </div>
-            </section>
-
-
-        </div >
+            </div>
+        </div>
     );
 };
 

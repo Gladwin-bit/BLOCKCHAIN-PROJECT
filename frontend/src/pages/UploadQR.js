@@ -1,7 +1,7 @@
 // src/pages/UploadQR.js
 import React, { useState } from "react";
 import { useSupplyChain } from "../hooks/useSupplyChain";
-import ProductTimeline from "../components/ProductTimeline";
+import { ProductTimeline } from "../components/ProductTimeline";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";

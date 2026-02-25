@@ -41,4 +41,3 @@ export const SkeletonLoader = ({ width = '100%', height = '20px', count = 1 }) =
     );
 };
 
-export default LoadingSpinner;

@@ -7,28 +7,28 @@ const roles = [
         id: 'manufacturer',
         title: 'Manufacturer',
         icon: '🏭',
-        description: 'Create and mint products on the blockchain',
+        description: 'Create and register sarees on the blockchain',
         requiresCertificate: true
     },
     {
         id: 'distributor',
         title: 'Distributor',
         icon: '🚚',
-        description: 'Manage product transfers and logistics',
+        description: 'Manage saree transfers and logistics',
         requiresCertificate: true
     },
     {
         id: 'retailer',
         title: 'Retailer',
         icon: '🏪',
-        description: 'Sell products to end consumers',
+        description: 'Sell sarees to end consumers',
         requiresCertificate: true
     },
     {
         id: 'customer',
         title: 'Customer',
         icon: '👤',
-        description: 'Verify and claim product ownership',
+        description: 'Verify and claim saree ownership',
         requiresCertificate: false
     },
     {

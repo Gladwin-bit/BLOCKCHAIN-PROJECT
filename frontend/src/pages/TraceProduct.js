@@ -1,9 +1,10 @@
 // src/pages/TraceProduct.js
 import React, { useState } from "react";
 import { useSupplyChain } from "../hooks/useSupplyChain";
-import ProductTimeline from "../components/ProductTimeline";
+import { ProductTimeline } from "../components/ProductTimeline";
 import { LoadingSpinner } from "../components/LoadingSpinner";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { Search, ShieldCheck } from "lucide-react";
 import "./TraceProduct.css";
 
 const TraceProduct = () => {
@@ -33,9 +34,9 @@ const TraceProduct = () => {
         } catch (e) {
             console.error(e);
             if (e.message.includes("Item not found")) {
-                setError(`❌ Asset #${productId} does not exist on the current ledger.`);
+                setError(`Asset #${productId} not found on the active ledger.`);
             } else {
-                setError(`⚠️ Error: ${e.message}`);
+                setError(`Error connecting to node: ${e.message}`);
             }
         } finally {
             setLoading(false);
@@ -43,110 +44,102 @@ const TraceProduct = () => {
     };
 
     return (
-        <div className="trace-product-page container glass">
-            <header className="page-header">
-                <h1>🔍 Trace Asset Journey</h1>
-                <p className="subtitle">Immutable Blockchain Audit Trail</p>
+        <div className="trace-product-page">
+            <header className="page-header" style={{ textAlign: 'center', marginBottom: '4rem' }}>
+                <h1 style={{ fontFamily: 'Space Grotesk', fontSize: '3.5rem', fontWeight: 700, letterSpacing: '-1px' }}>
+                    Trace Asset Journey
+                </h1>
+                <p className="subtitle" style={{ letterSpacing: '4px', textTransform: 'uppercase', opacity: 0.7 }}>
+                    Real-Time Supply Chain Audit
+                </p>
             </header>
 
             {!account ? (
-                <div className="connect-prompt">
-                    <button className="btn btn-connect pulse" onClick={connectWallet}>
-                        Connect MetaMask to Trace
+                <div className="connect-prompt" style={{ textAlign: 'center' }}>
+                    <button className="btn btn-primary" onClick={connectWallet}>
+                        Authorized Access Only
                     </button>
                 </div>
             ) : (
                 <div className="trace-content">
-                    {/* Search Section */}
-                    <div className="card search-card">
-                        <div className="input-group search-group">
-                            <input
-                                type="number"
-                                className="input-field"
-                                placeholder="Enter Asset ID..."
-                                value={productId}
-                                onChange={(e) => setProductId(e.target.value)}
-                                onKeyPress={(e) => e.key === 'Enter' && handleTrace()}
-                                disabled={loading}
-                            />
-                            <button
-                                className="btn-icon"
-                                onClick={handleTrace}
-                                disabled={loading}
-                            >
-                                {loading ? "⏳" : "➜"}
-                            </button>
+                    {/* SEARCH SECTION */}
+                    <div className="trace-search-section">
+                        <div className="search-card">
+                            <div className="input-group search-group" style={{ maxWidth: '100%' }}>
+                                <input
+                                    type="number"
+                                    className="input-field"
+                                    placeholder="Enter Digital Thread ID (e.g., 1)"
+                                    value={productId}
+                                    onChange={(e) => setProductId(e.target.value)}
+                                    onKeyPress={(e) => e.key === 'Enter' && handleTrace()}
+                                    style={{ background: 'white', color: 'black' }}
+                                />
+                                <button className="btn-icon" onClick={handleTrace} disabled={loading}>
+                                    {loading ? "..." : <Search size={24} />}
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Error Display */}
-                    {error && (
-                        <motion.div
-                            className="status-toast error slide-up"
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                        >
-                            {error}
-                        </motion.div>
-                    )}
+                    <AnimatePresence>
+                        {error && (
+                            <motion.div
+                                className="status-toast error"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0 }}
+                                style={{ margin: '0 auto' }}
+                            >
+                                {error}
+                            </motion.div>
+                        )}
 
-                    {/* Product Details */}
-                    {product && !loading && (
-                        <motion.div
-                            className="details-card fade-in"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                        >
-                            <div className="header-row">
-                                <span className="asset-id">#{product.id}</span>
-                                <span className="status-badge" data-status={product.stateRaw}>
-                                    {product.state}
-                                </span>
-                            </div>
-
-                            <h2>{product.name}</h2>
-                            <p className="owner-info">Held by: <span className="address">{product.currentOwner}</span></p>
-
-                            <hr className="divider" />
-
-                            <h3>⛓️ Supply Chain History</h3>
-                            <div className="timeline">
-                                {product.history.map((step, index) => (
-                                    <div key={index} className="timeline-item">
-                                        <div className="timeline-marker"></div>
-                                        <div className="timeline-content">
-                                            <div className="time">{step.timestamp}</div>
-                                            <h4>{step.state}</h4>
-                                            <p className="actor">Actor: {step.actor.slice(0, 8)}...</p>
-                                            <p className="location">
-                                                📍 {step.location.includes('|')
-                                                    ? `${step.location.split('|')[1]} (${step.location.split('|')[0]})`
-                                                    : step.location}
-                                            </p>
+                        {product && !loading && (
+                            <div className="product-inspection">
+                                {/* ASSET SUMMARY BOARD */}
+                                <div className="asset-summary-card">
+                                    <div className="asset-info-left">
+                                        <div className="asset-badge">SAREE THREAD #{product.id}</div>
+                                        <h2>{product.name}</h2>
+                                        <div className="asset-meta">
+                                            <div className="meta-item">
+                                                <label>Status</label>
+                                                <span style={{ color: 'var(--accent-gold)', fontWeight: 700 }}>{product.state}</span>
+                                            </div>
+                                            <div className="meta-item">
+                                                <label>Loom Location</label>
+                                                <span>{product.loomLocation || "N/A"}</span>
+                                            </div>
+                                            <div className="meta-item">
+                                                <label>Weave Date</label>
+                                                <span>{product.weaveDate || "N/A"}</span>
+                                            </div>
+                                            <div className="meta-item">
+                                                <label>Current Owner</label>
+                                                <span>{product.currentOwner.slice(0, 6)}...{product.currentOwner.slice(-4)}</span>
+                                            </div>
                                         </div>
                                     </div>
-                                ))}
+                                    <ShieldCheck size={80} color="#D4AF37" style={{ opacity: 0.1 }} />
+                                </div>
 
-                                {/* Customer Node - Final Node */}
-                                {product.customerClaim && product.customerClaim.isClaimed && (
-                                    <div className="timeline-item customer-node">
-                                        <div className="timeline-marker customer-marker"></div>
-                                        <div className="timeline-content customer-content">
-                                            <div className="time">{product.customerClaim.timestamp}</div>
-                                            <h4>🎉 Claimed by Customer</h4>
-                                            <p className="customer-name">👤 {product.customerClaim.customerName}</p>
-                                            <p className="actor">Wallet: {product.customerClaim.claimedBy.slice(0, 8)}...</p>
-                                            <p className="location">
-                                                📍 {product.customerClaim.location.includes('|')
-                                                    ? `${product.customerClaim.location.split('|')[1]} (${product.customerClaim.location.split('|')[0]})`
-                                                    : product.customerClaim.location}
-                                            </p>
-                                        </div>
+                                {/* HORIZONTAL MAP SECTION */}
+                                <div className="journey-map-section" style={{ marginTop: '4rem' }}>
+                                    <div className="map-header">
+                                        <div className="live-indicator" />
+                                        <h3>Geographic Audit Path</h3>
                                     </div>
-                                )}
+                                    <ProductTimeline
+                                        history={product.history}
+                                        customerClaim={product.customerClaim}
+                                    />
+                                </div>
                             </div>
-                        </motion.div>
-                    )}
+                        )}
+                    </AnimatePresence>
+
+                    {loading && <LoadingSpinner />}
                 </div>
             )}
         </div>

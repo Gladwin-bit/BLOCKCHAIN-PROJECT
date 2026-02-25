@@ -7,6 +7,7 @@ import RoleSelector from '../components/RoleSelector';
 import FileUpload from '../components/FileUpload';
 import { verifyDigitalSignature } from '../utils/signatureVerification';
 import { registerCertificateOnBlockchain } from '../utils/certificateBlockchain';
+import { Shield, ArrowRight, ArrowLeft } from 'lucide-react';
 import './Register.css';
 
 const Register = () => {
@@ -460,12 +461,7 @@ const Register = () => {
     };
 
     return (
-        <div
-            className="register-page"
-            style={{
-                '--bg-image': `url(${process.env.PUBLIC_URL}/supply-chain-bg.png)`
-            }}
-        >
+        <div className="register-page">
             <div className="register-container">
                 <motion.div
                     className="register-card glass"
@@ -474,10 +470,10 @@ const Register = () => {
                 >
                     <div className="register-header">
                         <div className="logo-section">
-                            <span className="logo-icon">⛓️</span>
-                            <h1>Create Account</h1>
+                            <span className="logo-icon">🧵</span>
+                            <h1>Join Kasaragod Sarees</h1>
                         </div>
-                        <p>Join the secure supply chain network</p>
+                        <p>Create your account for saree verification & traceability</p>
                     </div>
 
                     {/* Progress Indicator */}
@@ -524,6 +520,7 @@ const Register = () => {
                                     className="btn btn-secondary"
                                     onClick={handleBack}
                                 >
+                                    <ArrowLeft size={20} />
                                     Back
                                 </button>
                             )}
@@ -535,6 +532,7 @@ const Register = () => {
                                     onClick={handleNext}
                                 >
                                     Next
+                                    <ArrowRight size={20} />
                                 </button>
                             ) : (
                                 <button
@@ -548,7 +546,10 @@ const Register = () => {
                                             Creating Account...
                                         </>
                                     ) : (
-                                        'Create Account'
+                                        <>
+                                            Create Account
+                                            <Shield size={20} />
+                                        </>
                                     )}
                                 </button>
                             )}

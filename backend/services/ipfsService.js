@@ -28,8 +28,24 @@ class IPFSService {
     async uploadFile(file) {
         try {
             const pinataJWT = this.getPinataJWT();
+            const isDemoMode = process.env.DEMO_MODE === 'true' || !pinataJWT;
 
             if (!pinataJWT) {
+                if (isDemoMode) {
+                    console.warn('⚠️ PINATA_JWT not found. Running in DEMO MODE.');
+                    console.warn('   Using mock IPFS hash for local development.');
+
+                    // Artificial delay to simulate network upload
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+
+                    const mockHash = `QmDEMO${Math.random().toString(36).substring(2, 12)}MOCK`;
+                    return {
+                        ipfsHash: mockHash,
+                        ipfsUrl: `${this.pinataGateway}${mockHash}`,
+                        isMock: true
+                    };
+                }
+
                 console.error('❌ PINATA_JWT not found in environment variables');
                 console.error('   Please ensure PINATA_JWT is set in backend/.env file');
                 throw new Error('Pinata JWT not configured');
